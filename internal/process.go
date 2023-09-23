@@ -2,6 +2,7 @@ package internal
 
 import (
 	"encoding/csv"
+	"io"
 	"os"
 	"sync"
 )
@@ -10,33 +11,36 @@ func ProcessChunk(chunk *os.File, batchSize int, processBatch func([][]string)) 
 	defer chunk.Close()
 
 	var wg sync.WaitGroup
+	var records [][]string
+
+	process := func(wg *sync.WaitGroup, records [][]string) {
+		defer wg.Done()
+		wg.Add(1)
+
+		processBatch(records)
+	}
+
 	reader := csv.NewReader(chunk)
 
-	records, err := reader.ReadAll()
-	if err != nil {
-		panic(err)
-	}
+	for {
+		record, err := reader.Read()
 
-	if batchSize > len(records) {
-		processBatch(records)
-		return
-	}
-
-	batches := len(records) / batchSize
-
-	for i := 0; i < batches; i += 1 {
-		start := i * batchSize
-		end := start + batchSize
-
-		if end > len(records) {
-			end = len(records)
+		if err == io.EOF {
+			// Remaining records when window size is less than batch size
+			if len(records) != 0 {
+				go process(&wg, records)
+			}
+			break
+		} else if err != nil {
+			panic(err)
 		}
 
-		wg.Add(1)
-		go func(i int, j int, records [][]string, wg *sync.WaitGroup) {
-			defer wg.Done()
-			processBatch(records[start:end]) // Layer 3
-		}(start, end, records, &wg)
+		records = append(records, record)
+
+		if len(records) == batchSize {
+			go process(&wg, records)
+			records = records[:0] // Reset
+		}
 	}
 
 	wg.Wait()

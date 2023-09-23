@@ -33,7 +33,6 @@ func SplitFile(filePath string, chunkSize int) string {
 	}
 
 	filename := getFileName(filePath)
-
 	dirPath := "chunks/" + filename
 
 	if !checkPathExist(dirPath) {
@@ -49,6 +48,8 @@ func SplitFile(filePath string, chunkSize int) string {
 		if _, err := cmd.Output(); err != nil {
 			panic(err)
 		}
+	} else {
+		fmt.Println("Chunks found, skipping chunking")
 	}
 
 	return dirPath
@@ -56,12 +57,14 @@ func SplitFile(filePath string, chunkSize int) string {
 
 func countLinesInFile(filePath string) int {
 	cmd := exec.Command("wc", "-l", filePath)
+
 	output, err := cmd.Output()
 	if err != nil {
 		panic(err)
 	}
 
 	parts := strings.Split(string(output), " ")
+
 	lineCount, err := strconv.Atoi(parts[1])
 	if err != nil {
 		panic(err)
