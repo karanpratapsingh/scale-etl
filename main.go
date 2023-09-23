@@ -9,27 +9,24 @@ import (
 )
 
 var chunks = make(chan *os.File)
-// var batches = make(chan [][]string)
 
 var chunkSize int
 var batchSize int
-var file string
+var filePath string
 
 func init() {
-	internal.Args(chunkSize, batchSize, file)
+	internal.Args(&chunkSize, &batchSize, &filePath)
 }
 
 func processBatch(records [][]string) { // Layer 3
-	fmt.Println("processed", len(records))
+	// fmt.Println("processed", len(records))
 }
 
 func main() {
 	start := time.Now()
-	filename := "test"
-
 	var wg sync.WaitGroup
 
-	dirPath := internal.SplitFile(filename, chunkSize)
+	dirPath := internal.SplitFile(filePath, chunkSize)
 	go internal.ReadChunks(dirPath, chunks) // Layer 1
 
 	for c := range chunks {
@@ -43,5 +40,5 @@ func main() {
 	wg.Wait()
 
 	duration := time.Since(start)
-	fmt.Printf("Execution took %s\n", duration)
+	fmt.Printf("Execution completed in %s\n", duration)
 }
