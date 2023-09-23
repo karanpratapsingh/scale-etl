@@ -49,7 +49,7 @@ func SplitFile(filePath string, chunkSize int) string {
 			panic(err)
 		}
 	} else {
-		fmt.Println("Chunks found, skipping chunking")
+		fmt.Println("chunks found, skipping chunking")
 	}
 
 	return dirPath

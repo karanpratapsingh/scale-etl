@@ -28,7 +28,7 @@ func NewConfig(path string) Config {
 	if err != nil {
 		panic(fmt.Sprintf("Error unmarshalling YAML: %v\n", err))
 	}
-	fmt.Println(config.Delimiter)
+
 	fmt.Println("loaded config from", path)
 	return config
 }

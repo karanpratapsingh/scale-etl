@@ -35,5 +35,5 @@ func main() {
 	wg.Wait()
 
 	duration := time.Since(start)
-	fmt.Printf("Execution completed in %s\n", duration)
+	fmt.Printf("execution completed in %s\n", duration)
 }
