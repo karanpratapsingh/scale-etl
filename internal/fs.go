@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
+	"strings"
 )
 
 func ReadChunks(dirPath string, chunks chan *os.File) {
 	files, err := os.ReadDir(dirPath)
 	if err != nil {
-		fmt.Println(err)
-		return
+		panic(err)
 	}
 
 	for _, file := range files {
@@ -26,15 +27,25 @@ func ReadChunks(dirPath string, chunks chan *os.File) {
 	close(chunks)
 }
 
-func SplitFile(filename string, chunkSize int) string { // Create dir (if doesn't exists)
+func SplitFile(filePath string, chunkSize int) string {
+	if !checkPathExist(filePath) {
+		panic("file doesn't exist")
+	}
+
+	filename := getFileName(filePath)
+
 	dirPath := "chunks/" + filename
 
-	if !dirExists(dirPath) {
+	if !checkPathExist(dirPath) {
 		if err := os.MkdirAll("chunks/"+filename, 0777); err != nil {
 			panic(err)
 		}
 
-		cmd := exec.Command("split", "-l", fmt.Sprint(chunkSize), filename+".csv", dirPath+"/chunk-")
+		lineCount := countLinesInFile(filePath)
+		totalChunks := lineCount / chunkSize
+
+		fmt.Printf("Splitting %s into %d chunks of size %d\n", filePath, totalChunks, chunkSize)
+		cmd := exec.Command("split", "-l", fmt.Sprint(chunkSize), filePath, dirPath+"/chunk-")
 		if _, err := cmd.Output(); err != nil {
 			panic(err)
 		}
@@ -43,11 +54,33 @@ func SplitFile(filename string, chunkSize int) string { // Create dir (if doesn'
 	return dirPath
 }
 
-func dirExists(dirPath string) bool {
-	_, err := os.Stat(dirPath)
+func countLinesInFile(filePath string) int {
+	cmd := exec.Command("wc", "-l", filePath)
+	output, err := cmd.Output()
+	if err != nil {
+		panic(err)
+	}
+
+	parts := strings.Split(string(output), " ")
+	lineCount, err := strconv.Atoi(parts[1])
+	if err != nil {
+		panic(err)
+	}
+
+	return lineCount
+}
+
+func checkPathExist(path string) bool {
+	_, err := os.Stat(path)
 	if err != nil && os.IsNotExist(err) {
 		return false
 	}
 
 	return true
+}
+
+func getFileName(filePath string) string {
+	parts := strings.Split(filePath, ".")
+
+	return parts[0]
 }
