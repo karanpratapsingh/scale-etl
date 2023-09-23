@@ -7,12 +7,19 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type TransformType string
+
+const (
+	TransformTypeDynamoDB TransformType = "dynamodb"
+	TransformTypeParquet  TransformType = "parquet"
+)
+
 type Config struct {
-	FilePath      string `yaml:"file_path"`
-	TransformType string `yaml:"transform_type"`
-	Delimiter     string `yaml:"delimiter,omitempty"`
-	ChunkSize     int    `yaml:"chunk_size"`
-	BatchSize     int    `yaml:"batch_size"`
+	FilePath      string        `yaml:"file_path"`
+	TransformType TransformType `yaml:"transform_type"`
+	Delimiter     string        `yaml:"delimiter,omitempty"`
+	ChunkSize     int           `yaml:"chunk_size"`
+	BatchSize     int           `yaml:"batch_size"`
 }
 
 func NewConfig(path string) Config {
