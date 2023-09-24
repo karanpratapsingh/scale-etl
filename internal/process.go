@@ -4,7 +4,6 @@ import (
 	"encoding/csv"
 	"io"
 	"os"
-	"strings"
 	"sync"
 )
 
@@ -16,9 +15,7 @@ func ProcessChunk(chunk *os.File, batchSize int, transformer Transformer) {
 
 	processBatch := func(wg *sync.WaitGroup, records [][]string) {
 		defer wg.Done()
-
-		id := getChunkId(chunk.Name())
-		transformer.Transform(id, records)
+		transformer.Transform(records) // Layer 3
 	}
 
 	reader := csv.NewReader(chunk)
@@ -47,9 +44,4 @@ func ProcessChunk(chunk *os.File, batchSize int, transformer Transformer) {
 	}
 
 	wg.Wait()
-}
-
-func getChunkId(name string) string {
-	parts := strings.Split(name, "/")
-	return parts[len(parts)-1]
 }

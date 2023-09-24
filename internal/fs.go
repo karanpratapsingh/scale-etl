@@ -47,7 +47,7 @@ func SplitFile(filePath string, chunkSize int) string {
 			totalChunks := lineCount / chunkSize
 
 			fmt.Printf("Splitting %s into %d chunks of size %d\n", filePath, totalChunks, chunkSize)
-			cmd := exec.Command("split", "-l", fmt.Sprint(chunkSize), filePath, dirPath+"/"+filename+"-chunk-")
+			cmd := exec.Command("split", "-l", fmt.Sprint(chunkSize), filePath, dirPath+"/"+"chunk-")
 			if _, err := cmd.Output(); err != nil {
 				panic(err)
 			}

@@ -3,13 +3,13 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/segmentio/ksuid"
 	"os"
 	"sync"
 )
 
 type Transformer interface {
-	Transform(id string, records [][]string)
-	Save()
+	Transform(records [][]string)
 }
 
 func NewTransformer(transformType TransformType) Transformer {
@@ -31,55 +31,29 @@ type DynamoDBTransformer struct {
 	outputs map[string][][]string
 }
 
-func (d *DynamoDBTransformer) Transform(id string, records [][]string) {
-	d.mu.Lock()
-	// TODO: transform records
-	d.outputs[id] = append(d.outputs[id], records...)
-	d.mu.Unlock()
-}
-
-func (dt *DynamoDBTransformer) Save() {
-	saveToDisk := func(id string, records [][]string) {
-		jsonData, err := json.Marshal(records)
-		if err != nil {
-			panic(err)
-		}
-
-		file, err := os.Create("output/" + id + ".json")
-		if err != nil {
-			panic(err)
-		}
-		defer file.Close()
-
-		_, err = file.Write(jsonData)
-		if err != nil {
-			panic(err)
-		}
-
-		delete(dt.outputs, id) // Delete saved records
+func (d *DynamoDBTransformer) Transform(records [][]string) {
+	// TODO: Transform
+	jsonData, err := json.Marshal(records)
+	if err != nil {
+		panic(err)
 	}
 
-	var wg sync.WaitGroup
-
-	for id, records := range dt.outputs {
-		wg.Add(1)
-
-		go func(wg *sync.WaitGroup, id string, records [][]string) {
-			defer wg.Done()
-			saveToDisk(id, records)
-		}(&wg, id, records)
+	// TODO: auto create folder, hash based on filename
+	file, err := os.Create("output/" + ksuid.New().String() + ".json")
+	if err != nil {
+		panic(err)
 	}
 
-	wg.Wait()
+	defer file.Close()
 
+	_, err = file.Write(jsonData)
+	if err != nil {
+		panic(err)
+	}
 }
 
 type ParquetTransformer struct{}
 
-func (ParquetTransformer) Transform(id string, records [][]string) {
-	fmt.Println("parquet: process", id, len(records))
-}
-
-func (ParquetTransformer) Save() {
-	panic("todo")
+func (ParquetTransformer) Transform(records [][]string) {
+	fmt.Println("parquet: process", len(records))
 }

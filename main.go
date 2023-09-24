@@ -2,6 +2,7 @@ package main
 
 import (
 	"csv-ingest/internal"
+	"fmt"
 	"os"
 	"sync"
 )
@@ -20,6 +21,7 @@ func main() {
 	var transformer = internal.NewTransformer(config.TransformType)
 
 	internal.MeasureExecTime("processing", func() {
+		fmt.Println("processing with batch size", config.BatchSize)
 		for chunk := range chunks {
 			wg.Add(1)
 
@@ -30,9 +32,5 @@ func main() {
 		}
 
 		wg.Wait()
-	})
-
-	internal.MeasureExecTime("saving", func() {
-		transformer.Save()
 	})
 }
