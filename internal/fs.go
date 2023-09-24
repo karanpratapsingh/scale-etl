@@ -2,32 +2,32 @@ package internal
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 )
 
-func ReadChunks(dirPath string, chunks chan *os.File) {
-	files, err := os.ReadDir(dirPath)
-	if err != nil {
-		panic(err)
-	}
-
-	for _, file := range files {
-		if !file.IsDir() {
-			chunk, err := os.Open(fmt.Sprintf("%s/%s", dirPath, file.Name()))
-			if err != nil {
-				panic(err)
+func ReadChunksBuffers(dirPath string, chunksBuffers [][]fs.DirEntry, chunks chan *os.File, processed chan struct{}) {
+	for _, buffer := range chunksBuffers {
+		for _, file := range buffer {
+			if !file.IsDir() {
+				chunk, err := os.Open(fmt.Sprintf("%s/%s", dirPath, file.Name()))
+				if err != nil {
+					panic(err)
+				}
+				chunks <- chunk
 			}
-			chunks <- chunk
 		}
+		fmt.Println("sent", buffer)
+		<-processed
 	}
 
 	close(chunks)
 }
 
-func SplitFile(filePath string, processDir string, chunkSize int) string {
+func SplitInputFile(filePath string, processDir string, chunkSize int, bufferSize int) (string, [][]fs.DirEntry) {
 	if !PathExists(filePath) {
 		panic("file doesn't exist")
 	}
@@ -35,12 +35,13 @@ func SplitFile(filePath string, processDir string, chunkSize int) string {
 	filename := GetFileName(filePath)
 	dirPath := fmt.Sprintf("%s/%s", processDir, GenerateHash(filename))
 
+	lineCount := countLinesInFile(filePath)
+	totalChunks := lineCount / chunkSize
+
 	if !PathExists(dirPath) {
 		MakeDirectory(dirPath)
 
 		MeasureExecTime("splitting", func() {
-			lineCount := countLinesInFile(filePath)
-			totalChunks := lineCount / chunkSize
 
 			fmt.Printf("Splitting %s into %d chunks of size %d\n", filePath, totalChunks, chunkSize)
 
@@ -53,7 +54,15 @@ func SplitFile(filePath string, processDir string, chunkSize int) string {
 		fmt.Println("chunks found, skipping chunking")
 	}
 
-	return dirPath
+	files, err := os.ReadDir(dirPath)
+	if err != nil {
+		panic(err)
+	}
+
+	chunksBuffers := chunk(files, bufferSize)
+	fmt.Printf("divided %d chunks into %d buffers\n", totalChunks, len(chunksBuffers))
+
+	return dirPath, chunksBuffers
 }
 
 func MakeDirectory(path string) {

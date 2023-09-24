@@ -33,7 +33,7 @@ func ParseChunk(chunk *os.File, batches chan [][]string, schema Schema, batchSiz
 		if err == io.EOF {
 			// Remaining records when window size is less than batch size
 			if len(records) != 0 {
-				batches <- CopySlice(records)
+				batches <- copySlice(records)
 			}
 			break
 		} else if err != nil {
@@ -43,7 +43,7 @@ func ParseChunk(chunk *os.File, batches chan [][]string, schema Schema, batchSiz
 		records = append(records, record)
 
 		if len(records) == batchSize {
-			batches <- CopySlice(records) // Copy slice for goroutine
+			batches <- copySlice(records) // Copy slice for goroutine
 			records = records[:0]         // Reset batch window
 		}
 	}
