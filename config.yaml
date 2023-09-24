@@ -3,14 +3,14 @@ transform_type: dynamodb # enum: dynamodb, parquet
 chunk_size: 100000
 batch_size: 10000
 schema:
-  name: string
-  dob: string
-  email: string
-  phone_number: string
-  address: string
-  city: string
-  state: string
-  postal_code: string
+  - name: string
+  - dob: string
+  - email: string
+  - phone_number: string
+  - address: string
+  - city: string
+  - state: string
+  - postal_code: string
 # process_dir: chunks # (optional) default: chunks
 # output_dir: output # (optional) default: output
 # delimiter: "," # (optional) default: comma (",")

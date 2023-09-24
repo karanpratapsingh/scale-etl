@@ -4,15 +4,27 @@ import mapset "github.com/deckarep/golang-set/v2"
 
 type Schema struct {
 	Header mapset.Set[string]
-	Value  map[string]any
+	Fields []string
+	Types  map[string]string
 }
 
 func (s *Schema) UnmarshalYAML(unmarshal func(any) error) error {
-	if err := unmarshal(&s.Value); err != nil {
+	var schema []map[string]string
+
+	if err := unmarshal(&schema); err != nil {
 		return err
 	}
 
-	s.Header = mapset.NewSetFromMapKeys(s.Value)
+	s.Types = make(map[string]string)
+
+	for _, fieldMap := range schema {
+		for fieldValue, fieldType := range fieldMap {
+			s.Fields = append(s.Fields, fieldValue)
+			s.Types[fieldValue] = fieldType
+		}
+	}
+
+	s.Header = mapset.NewSet(s.Fields...)
 
 	return nil
 }

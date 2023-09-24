@@ -29,7 +29,8 @@ func ParseChunk(chunk *os.File, transformer Transformer, schema Schema, batchSiz
 	}
 
 	// Skip csv header (if present)
-	if !mapset.NewSet(record...).Equal(schema.Header) {
+	recordSet := mapset.NewSet(record...)
+	if !recordSet.Equal(schema.Header) {
 		records = append(records, record)
 	}
 
@@ -52,8 +53,8 @@ func ParseChunk(chunk *os.File, transformer Transformer, schema Schema, batchSiz
 		if len(records) == batchSize {
 			wg.Add(1)
 
-			go processBatch(&wg, copySlice(records))
-			records = records[:0] // Reset
+			go processBatch(&wg, copySlice(records)) // Copy slice for goroutine
+			records = records[:0]                    // Reset batch window
 		}
 	}
 
