@@ -16,7 +16,6 @@ func ProcessChunk(chunk *os.File, batchSize int, transformer Transformer) {
 
 	processBatch := func(wg *sync.WaitGroup, records [][]string) {
 		defer wg.Done()
-		wg.Add(1)
 
 		id := getChunkId(chunk.Name())
 		transformer.Transform(id, records)
@@ -30,6 +29,7 @@ func ProcessChunk(chunk *os.File, batchSize int, transformer Transformer) {
 		if err == io.EOF {
 			// Remaining records when window size is less than batch size
 			if len(records) != 0 {
+				wg.Add(1)
 				go processBatch(&wg, records)
 			}
 			break
@@ -40,6 +40,7 @@ func ProcessChunk(chunk *os.File, batchSize int, transformer Transformer) {
 		records = append(records, record)
 
 		if len(records) == batchSize {
+			wg.Add(1)
 			go processBatch(&wg, records)
 			records = records[:0] // Reset
 		}

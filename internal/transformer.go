@@ -18,7 +18,7 @@ func NewTransformer(transformType TransformType) Transformer {
 
 	switch transformType {
 	case TransformTypeDynamoDB:
-		transformer = &DynamoDBTransformer{make(map[string][][]string), sync.Mutex{}}
+		transformer = &DynamoDBTransformer{sync.Mutex{}, make(map[string][][]string)}
 	case TransformTypeParquet:
 		transformer = ParquetTransformer{}
 	}
@@ -28,12 +28,13 @@ func NewTransformer(transformType TransformType) Transformer {
 }
 
 type DynamoDBTransformer struct {
-	outputs map[string][][]string
 	mu      sync.Mutex
+	outputs map[string][][]string
 }
 
 func (d *DynamoDBTransformer) Transform(id string, records [][]string) {
 	d.mu.Lock()
+	// TODO: ransform records
 	d.outputs[id] = append(d.outputs[id], records...)
 	d.mu.Unlock()
 }
@@ -58,17 +59,16 @@ func (dt *DynamoDBTransformer) Save() {
 			panic(err)
 		}
 
-		// TODO: test delete from map
-		delete(dt.outputs, id)
+		delete(dt.outputs, id) // TODO: test delete from map
 	}
 
 	var wg sync.WaitGroup
 
 	for id, records := range dt.outputs {
+		wg.Add(1)
+
 		go func(wg *sync.WaitGroup, id string, records [][]string) {
 			defer wg.Done()
-			wg.Add(1)
-
 			saveToDisk(id, records)
 		}(&wg, id, records)
 	}

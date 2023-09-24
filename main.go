@@ -23,10 +23,10 @@ func main() {
 	var transformer = internal.NewTransformer(config.TransformType)
 
 	for chunk := range chunks {
+		wg.Add(1)
+
 		go func(chunk *os.File, wg *sync.WaitGroup) {
 			defer wg.Done()
-			wg.Add(1)
-
 			internal.ProcessChunk(chunk, config.BatchSize, transformer) // Layer 2
 		}(chunk, &wg)
 	}
