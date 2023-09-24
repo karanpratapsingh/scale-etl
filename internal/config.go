@@ -45,6 +45,10 @@ func NewConfig(path string) Config {
 		panic(fmt.Sprintf("error unmarshalling YAML: %v\n", err))
 	}
 
+	if len(config.Schema.Fields) == 0 {
+		panic("schema definition is required")
+	}
+
 	fmt.Println("loaded config from", path)
 	return config
 }

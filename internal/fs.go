@@ -9,24 +9,22 @@ import (
 )
 
 func ReadChunks(dirPath string, chunks chan *os.File) {
-	MeasureExecTime("reading chunks", func() {
-		files, err := os.ReadDir(dirPath)
-		if err != nil {
-			panic(err)
-		}
+	files, err := os.ReadDir(dirPath)
+	if err != nil {
+		panic(err)
+	}
 
-		for _, file := range files {
-			if !file.IsDir() {
-				chunk, err := os.Open(fmt.Sprintf("%s/%s", dirPath, file.Name()))
-				if err != nil {
-					panic(err)
-				}
-				chunks <- chunk
+	for _, file := range files {
+		if !file.IsDir() {
+			chunk, err := os.Open(fmt.Sprintf("%s/%s", dirPath, file.Name()))
+			if err != nil {
+				panic(err)
 			}
+			chunks <- chunk
 		}
+	}
 
-		close(chunks)
-	})
+	close(chunks)
 }
 
 func SplitFile(filePath string, processDir string, chunkSize int) string {
