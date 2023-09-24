@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/go-faker/faker/v4 v4.2.0
+	github.com/segmentio/ksuid v1.0.4
 	gopkg.in/yaml.v2 v2.4.0
 )
 
