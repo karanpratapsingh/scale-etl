@@ -12,11 +12,11 @@ type Transformer interface {
 	Transform(records [][]string)
 }
 
-func NewTransformer(transformType TransformType, filePath string) Transformer {
+func NewTransformer(transformType TransformType, filePath string, outputDir string) Transformer {
 	var transformer Transformer
 
 	filename := GetFileName(filePath)
-	dirPath := fmt.Sprintf("output/%s", GenerateHash(filename))
+	dirPath := fmt.Sprintf("%s/%s", outputDir, GenerateHash(filename))
 	MakeDirectory(dirPath)
 
 	switch transformType {
@@ -24,6 +24,8 @@ func NewTransformer(transformType TransformType, filePath string) Transformer {
 		transformer = DynamoDBTransformer{dirPath}
 	case TransformTypeParquet:
 		transformer = ParquetTransformer{}
+	default:
+		panic("invalid transform type")
 	}
 
 	fmt.Println("Transform type", transformType)

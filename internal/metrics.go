@@ -9,7 +9,7 @@ import (
 func MeasureExecTime(id string, function func()) {
 	start := time.Now()
 	function()
-	// PrintMemoryUsage() // Enable with debug flag?
+	// PrintMemoryUsage() // TODO: Enable with debug flag?
 	duration := time.Since(start)
 	fmt.Printf("%s took %s\n", id, duration)
 }

@@ -29,13 +29,13 @@ func ReadChunks(dirPath string, chunks chan *os.File) {
 	})
 }
 
-func SplitFile(filePath string, chunkSize int) string {
+func SplitFile(filePath string, processDir string, chunkSize int) string {
 	if !CheckPathExists(filePath) {
 		panic("file doesn't exist")
 	}
 
 	filename := GetFileName(filePath)
-	dirPath := fmt.Sprintf("chunks/%s", GenerateHash(filename))
+	dirPath := fmt.Sprintf("%s/%s", processDir, GenerateHash(filename))
 
 	if !CheckPathExists(dirPath) {
 		MakeDirectory(dirPath)
