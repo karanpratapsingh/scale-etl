@@ -22,16 +22,19 @@ func main() {
 
 	var transformer = internal.NewTransformer(config.TransformType)
 
-	for c := range chunks {
-		wg.Add(1)
+	for chunk := range chunks {
 		go func(chunk *os.File, wg *sync.WaitGroup) {
 			defer wg.Done()
+			wg.Add(1)
+
 			internal.ProcessChunk(chunk, config.BatchSize, transformer) // Layer 2
-		}(c, &wg)
+		}(chunk, &wg)
 	}
 
 	wg.Wait()
 
 	duration := time.Since(start)
 	fmt.Printf("execution completed in %s\n", duration)
+
+	transformer.Save()
 }
