@@ -20,6 +20,9 @@ type Config struct {
 	Delimiter     rune          `yaml:"delimiter,omitempty"`
 	ChunkSize     int           `yaml:"chunk_size"`
 	BatchSize     int           `yaml:"batch_size"`
+	BufferSize    int           `yaml:"buffer_size,omitempty"`
+	ProcessDir    string        `yaml:"process_dir,omitempty"`
+	OutputDir     string        `yaml:"output_dir,omitempty"`
 }
 
 // TODO: schema
@@ -30,7 +33,12 @@ func NewConfig(path string) Config {
 	}
 
 	var config Config
-	config.Delimiter = ',' // Default delimiter is comma (,)
+
+	// Set defaults
+	config.Delimiter = ','
+	config.BufferSize = 20
+	config.ProcessDir = "chunks"
+	config.OutputDir = "output"
 
 	err = yaml.Unmarshal(file, &config)
 	if err != nil {

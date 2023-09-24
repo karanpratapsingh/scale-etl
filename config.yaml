@@ -1,5 +1,8 @@
 file_path: test.csv
-transform_type: dynamodb # parquet
+transform_type: dynamodb # enum: dynamodb, parquet
 chunk_size: 100000
 batch_size: 10000
-# delimiter: "," # Defaults to comma
+# process_dir: chunks # (optional) default: chunks
+# output_dir: output # (optional) default: output
+# delimiter: "," # (optional) default: comma (",")
+# buffer_size: 20 # (optional) default: 20 chunks at a time
