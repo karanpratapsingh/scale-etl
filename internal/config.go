@@ -20,6 +20,7 @@ type Config struct {
 	Delimiter     rune          `yaml:"delimiter,omitempty"`
 	ChunkSize     int           `yaml:"chunk_size"`
 	BatchSize     int           `yaml:"batch_size"`
+	Schema        Schema        `yaml:"schema"`
 	BufferSize    int           `yaml:"buffer_size,omitempty"`
 	ProcessDir    string        `yaml:"process_dir,omitempty"`
 	OutputDir     string        `yaml:"output_dir,omitempty"`
@@ -40,9 +41,8 @@ func NewConfig(path string) Config {
 	config.ProcessDir = "chunks"
 	config.OutputDir = "output"
 
-	err = yaml.Unmarshal(file, &config)
-	if err != nil {
-		panic(fmt.Sprintf("Error unmarshalling YAML: %v\n", err))
+	if err = yaml.Unmarshal(file, &config); err != nil {
+		panic(fmt.Sprintf("error unmarshalling YAML: %v\n", err))
 	}
 
 	fmt.Println("loaded config from", path)
