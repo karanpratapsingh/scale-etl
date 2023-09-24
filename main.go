@@ -18,7 +18,7 @@ func main() {
 	dirPath := internal.SplitFile(config.FilePath, config.ChunkSize)
 	go internal.ReadChunks(dirPath, chunks) // Layer 1
 
-	var transformer = internal.NewTransformer(config.TransformType)
+	var transformer = internal.NewTransformer(config.TransformType, config.FilePath)
 
 	internal.MeasureExecTime("processing", func() {
 		fmt.Println("processing with batch size", config.BatchSize)

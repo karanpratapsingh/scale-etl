@@ -30,17 +30,15 @@ func ReadChunks(dirPath string, chunks chan *os.File) {
 }
 
 func SplitFile(filePath string, chunkSize int) string {
-	if !checkPathExist(filePath) {
+	if !CheckPathExists(filePath) {
 		panic("file doesn't exist")
 	}
 
-	filename := getFileName(filePath)
-	dirPath := "chunks/" + filename
+	filename := GetFileName(filePath)
+	dirPath := "chunks/" + GenerateHash(filename)
 
-	if !checkPathExist(dirPath) {
-		if err := os.MkdirAll("chunks/"+filename, 0777); err != nil {
-			panic(err)
-		}
+	if !CheckPathExists(dirPath) {
+		MakeDirectory(dirPath)
 
 		MeasureExecTime("splitting", func() {
 			lineCount := countLinesInFile(filePath)
@@ -59,6 +57,27 @@ func SplitFile(filePath string, chunkSize int) string {
 	return dirPath
 }
 
+func MakeDirectory(path string) {
+	if err := os.MkdirAll(path, 0777); err != nil {
+		panic(err)
+	}
+}
+
+func GetFileName(filePath string) string {
+	parts := strings.Split(filePath, ".")
+
+	return parts[0]
+}
+
+func CheckPathExists(path string) bool {
+	_, err := os.Stat(path)
+	if err != nil && os.IsNotExist(err) {
+		return false
+	}
+
+	return true
+}
+
 func countLinesInFile(filePath string) int {
 	cmd := exec.Command("wc", "-l", filePath)
 
@@ -75,19 +94,4 @@ func countLinesInFile(filePath string) int {
 	}
 
 	return lineCount
-}
-
-func checkPathExist(path string) bool {
-	_, err := os.Stat(path)
-	if err != nil && os.IsNotExist(err) {
-		return false
-	}
-
-	return true
-}
-
-func getFileName(filePath string) string {
-	parts := strings.Split(filePath, ".")
-
-	return parts[0]
 }

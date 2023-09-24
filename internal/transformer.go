@@ -3,21 +3,25 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/segmentio/ksuid"
 	"os"
-	"sync"
+
+	"github.com/segmentio/ksuid"
 )
 
 type Transformer interface {
 	Transform(records [][]string)
 }
 
-func NewTransformer(transformType TransformType) Transformer {
+func NewTransformer(transformType TransformType, filePath string) Transformer {
 	var transformer Transformer
+
+	filename := GetFileName(filePath)
+	dirPath := "output/" + GenerateHash(filename) // TODO: convert to sprintf
+	MakeDirectory(dirPath)
 
 	switch transformType {
 	case TransformTypeDynamoDB:
-		transformer = &DynamoDBTransformer{sync.Mutex{}, make(map[string][][]string)}
+		transformer = DynamoDBTransformer{dirPath}
 	case TransformTypeParquet:
 		transformer = ParquetTransformer{}
 	}
@@ -27,27 +31,23 @@ func NewTransformer(transformType TransformType) Transformer {
 }
 
 type DynamoDBTransformer struct {
-	mu      sync.Mutex
-	outputs map[string][][]string
+	dirPath string
 }
 
-func (d *DynamoDBTransformer) Transform(records [][]string) {
+func (dt DynamoDBTransformer) Transform(records [][]string) {
 	// TODO: Transform
 	jsonData, err := json.Marshal(records)
 	if err != nil {
 		panic(err)
 	}
 
-	// TODO: auto create folder, hash based on filename
-	file, err := os.Create("output/" + ksuid.New().String() + ".json")
+	file, err := os.Create(dt.dirPath + "/" + ksuid.New().String() + ".json")
 	if err != nil {
 		panic(err)
 	}
-
 	defer file.Close()
 
-	_, err = file.Write(jsonData)
-	if err != nil {
+	if _, err = file.Write(jsonData); err != nil {
 		panic(err)
 	}
 }
