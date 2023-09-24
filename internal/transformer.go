@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"sync"
-	"time"
 )
 
 type Transformer interface {
@@ -34,14 +33,12 @@ type DynamoDBTransformer struct {
 
 func (d *DynamoDBTransformer) Transform(id string, records [][]string) {
 	d.mu.Lock()
-	// TODO: ransform records
+	// TODO: transform records
 	d.outputs[id] = append(d.outputs[id], records...)
 	d.mu.Unlock()
 }
 
 func (dt *DynamoDBTransformer) Save() {
-	start := time.Now()
-
 	saveToDisk := func(id string, records [][]string) {
 		jsonData, err := json.Marshal(records)
 		if err != nil {
@@ -59,7 +56,7 @@ func (dt *DynamoDBTransformer) Save() {
 			panic(err)
 		}
 
-		delete(dt.outputs, id) // TODO: test delete from map
+		delete(dt.outputs, id) // Delete saved records
 	}
 
 	var wg sync.WaitGroup
@@ -75,8 +72,6 @@ func (dt *DynamoDBTransformer) Save() {
 
 	wg.Wait()
 
-	duration := time.Since(start)
-	fmt.Printf("save completed in %s\n", duration)
 }
 
 type ParquetTransformer struct{}

@@ -9,22 +9,24 @@ import (
 )
 
 func ReadChunks(dirPath string, chunks chan *os.File) {
-	files, err := os.ReadDir(dirPath)
-	if err != nil {
-		panic(err)
-	}
-
-	for _, file := range files {
-		if !file.IsDir() {
-			chunk, err := os.Open(dirPath + "/" + file.Name())
-			if err != nil {
-				panic(err)
-			}
-			chunks <- chunk
+	MeasureExecTime("reading chunks", func() {
+		files, err := os.ReadDir(dirPath)
+		if err != nil {
+			panic(err)
 		}
-	}
 
-	close(chunks)
+		for _, file := range files {
+			if !file.IsDir() {
+				chunk, err := os.Open(dirPath + "/" + file.Name())
+				if err != nil {
+					panic(err)
+				}
+				chunks <- chunk
+			}
+		}
+
+		close(chunks)
+	})
 }
 
 func SplitFile(filePath string, chunkSize int) string {
@@ -40,14 +42,16 @@ func SplitFile(filePath string, chunkSize int) string {
 			panic(err)
 		}
 
-		lineCount := countLinesInFile(filePath)
-		totalChunks := lineCount / chunkSize
+		MeasureExecTime("splitting", func() {
+			lineCount := countLinesInFile(filePath)
+			totalChunks := lineCount / chunkSize
 
-		fmt.Printf("Splitting %s into %d chunks of size %d\n", filePath, totalChunks, chunkSize)
-		cmd := exec.Command("split", "-l", fmt.Sprint(chunkSize), filePath, dirPath+"/"+filename+"-chunk-")
-		if _, err := cmd.Output(); err != nil {
-			panic(err)
-		}
+			fmt.Printf("Splitting %s into %d chunks of size %d\n", filePath, totalChunks, chunkSize)
+			cmd := exec.Command("split", "-l", fmt.Sprint(chunkSize), filePath, dirPath+"/"+filename+"-chunk-")
+			if _, err := cmd.Output(); err != nil {
+				panic(err)
+			}
+		})
 	} else {
 		fmt.Println("chunks found, skipping chunking")
 	}
