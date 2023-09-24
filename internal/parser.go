@@ -5,9 +5,11 @@ import (
 	"io"
 	"os"
 	"sync"
+
+	mapset "github.com/deckarep/golang-set/v2"
 )
 
-func ParseChunk(chunk *os.File, transformer Transformer, batchSize int, delimiter rune) {
+func ParseChunk(chunk *os.File, transformer Transformer, schema Schema, batchSize int, delimiter rune) {
 	defer chunk.Close()
 
 	var wg sync.WaitGroup
@@ -21,14 +23,24 @@ func ParseChunk(chunk *os.File, transformer Transformer, batchSize int, delimite
 	reader := csv.NewReader(chunk)
 	reader.Comma = delimiter
 
+	record, err := reader.Read()
+	if err != nil {
+		panic(err)
+	}
+
+	// Skip csv header (if present)
+	if !mapset.NewSet(record...).Equal(schema.Header) {
+		records = append(records, record)
+	}
+
 	for {
 		record, err := reader.Read()
-		// TODO: skip header
+
 		if err == io.EOF {
 			// Remaining records when window size is less than batch size
 			if len(records) != 0 {
 				wg.Add(1)
-				go processBatch(&wg, records)
+				go processBatch(&wg, copySlice(records))
 			}
 			break
 		} else if err != nil {
@@ -39,10 +51,18 @@ func ParseChunk(chunk *os.File, transformer Transformer, batchSize int, delimite
 
 		if len(records) == batchSize {
 			wg.Add(1)
-			go processBatch(&wg, records)
+
+			go processBatch(&wg, copySlice(records))
 			records = records[:0] // Reset
 		}
 	}
 
 	wg.Wait()
+}
+
+func copySlice(input [][]string) [][]string {
+	copiedSlice := make([][]string, len(input))
+	copy(copiedSlice, input)
+
+	return copiedSlice
 }

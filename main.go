@@ -28,7 +28,13 @@ func main() {
 
 			go func(chunk *os.File, wg *sync.WaitGroup) {
 				defer wg.Done()
-				internal.ParseChunk(chunk, transformer, config.BatchSize, config.Delimiter) // Layer 2
+				internal.ParseChunk(
+					chunk,
+					transformer,
+					config.Schema,
+					config.BatchSize,
+					config.Delimiter,
+				) // Layer 2
 			}(chunk, &wg)
 		}
 

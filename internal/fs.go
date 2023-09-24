@@ -30,14 +30,14 @@ func ReadChunks(dirPath string, chunks chan *os.File) {
 }
 
 func SplitFile(filePath string, processDir string, chunkSize int) string {
-	if !CheckPathExists(filePath) {
+	if !PathExists(filePath) {
 		panic("file doesn't exist")
 	}
 
 	filename := GetFileName(filePath)
 	dirPath := fmt.Sprintf("%s/%s", processDir, GenerateHash(filename))
 
-	if !CheckPathExists(dirPath) {
+	if !PathExists(dirPath) {
 		MakeDirectory(dirPath)
 
 		MeasureExecTime("splitting", func() {
@@ -70,7 +70,7 @@ func GetFileName(filePath string) string {
 	return parts[0]
 }
 
-func CheckPathExists(path string) bool {
+func PathExists(path string) bool {
 	_, err := os.Stat(path)
 	if err != nil && os.IsNotExist(err) {
 		return false
