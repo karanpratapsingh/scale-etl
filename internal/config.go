@@ -26,7 +26,6 @@ type Config struct {
 	OutputDir     string        `yaml:"output_dir,omitempty"`
 }
 
-// TODO: schema
 func NewConfig(path string) Config {
 	file, err := os.ReadFile(path)
 	if err != nil {
@@ -37,12 +36,16 @@ func NewConfig(path string) Config {
 
 	// Set defaults
 	config.Delimiter = ','
-	config.BufferSize = 20
+	config.BufferSize = 5
 	config.ProcessDir = "chunks"
 	config.OutputDir = "output"
 
 	if err = yaml.Unmarshal(file, &config); err != nil {
 		panic(fmt.Sprintf("error unmarshalling YAML: %v\n", err))
+	}
+
+	if config.BufferSize < 1 {
+		panic("buffer size cannot be less than 1")
 	}
 
 	if len(config.Schema.Fields) == 0 {

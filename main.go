@@ -3,6 +3,7 @@ package main
 import (
 	"csv-ingest/internal"
 	"fmt"
+	"io/fs"
 	"os"
 	"sync"
 )
@@ -10,16 +11,17 @@ import (
 var args internal.Args = internal.ParseArgs()
 var config internal.Config = internal.NewConfig(args.ConfigPath)
 
-var chunks = make(chan *os.File, config.BufferSize)
-var batches = make(chan [][]string, config.BufferSize)
+var chunks = make(chan *os.File) // TODO: rename to queue_size
+var batches = make(chan [][]string)
+var processed = make(chan struct{})
 
 func main() {
 	var transformer = internal.NewTransformer(config.TransformType, config.FilePath, config.OutputDir)
 
-	dirPath := internal.SplitFile(config.FilePath, config.ProcessDir, config.ChunkSize)
+	dirPath, chunksBuffers := internal.SplitInputFile(config.FilePath, config.ProcessDir, config.ChunkSize, config.BufferSize)
 
 	go internal.MeasureExecTime("reading chunks", func() {
-		internal.ReadChunks(dirPath, chunks) // Layer 1
+		internal.ReadChunksBuffers(dirPath, chunksBuffers, chunks, processed) // Layer 1
 	})
 
 	internal.MeasureExecTime(
@@ -29,7 +31,7 @@ func main() {
 			var wgBatches sync.WaitGroup
 
 			wgChunks.Add(1)
-			go processChunks(&wgChunks) // Layer 2
+			go processChunks(&wgChunks, chunksBuffers) // Layer 2
 
 			wgBatches.Add(1)
 			go processBatches(&wgBatches, transformer) // Layer 3
@@ -40,22 +42,27 @@ func main() {
 		})
 }
 
-func processChunks(wg *sync.WaitGroup) {
+func processChunks(wg *sync.WaitGroup, chunksBuffers [][]fs.DirEntry) {
 	defer wg.Done()
 
-	for chunk := range chunks {
-		wg.Add(1)
+	for i, chunksBuffer := range chunksBuffers {
+		for range chunksBuffer {
+			chunk := <-chunks
+			wg.Add(1)
 
-		go func(chunk *os.File, wg *sync.WaitGroup) {
-			defer wg.Done()
-			internal.ParseChunk(
-				chunk,
-				batches,
-				config.Schema,
-				config.BatchSize,
-				config.Delimiter,
-			)
-		}(chunk, wg)
+			go func(chunk *os.File, wg *sync.WaitGroup) {
+				defer wg.Done()
+				internal.ParseChunk(
+					chunk,
+					batches,
+					config.Schema,
+					config.BatchSize,
+					config.Delimiter,
+				)
+			}(chunk, wg)
+		}
+		fmt.Println("completed", i+1)
+		processed <- struct{}{}
 	}
 }
 
