@@ -17,7 +17,12 @@ func NewTransformer(transformType TransformType, filePath string, outputDir stri
 
 	filename := GetFileName(filePath)
 	dirPath := fmt.Sprintf("%s/%s", outputDir, GenerateHash(filename))
-	MakeDirectory(dirPath)
+
+	if PathExists(dirPath) {
+		os.RemoveAll(dirPath)
+	}
+
+	MakeDirectory(dirPath) // TODO: delete existing
 
 	switch transformType {
 	case TransformTypeDynamoDB:
@@ -44,6 +49,13 @@ func (dt DynamoDBTransformer) Transform(records [][]string) {
 	}
 
 	uid := ksuid.New().String()
+
+	for _, r := range records {
+		if r[3] == "phone_number" {
+			fmt.Println(uid, r)
+		}
+	}
+
 	file, err := os.Create(fmt.Sprintf("%s/%s.json", dt.dirPath, uid))
 	if err != nil {
 		panic(err)
