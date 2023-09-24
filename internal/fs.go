@@ -17,7 +17,7 @@ func ReadChunks(dirPath string, chunks chan *os.File) {
 
 		for _, file := range files {
 			if !file.IsDir() {
-				chunk, err := os.Open(dirPath + "/" + file.Name())
+				chunk, err := os.Open(fmt.Sprintf("%s/%s", dirPath, file.Name()))
 				if err != nil {
 					panic(err)
 				}
@@ -35,7 +35,7 @@ func SplitFile(filePath string, chunkSize int) string {
 	}
 
 	filename := GetFileName(filePath)
-	dirPath := "chunks/" + GenerateHash(filename)
+	dirPath := fmt.Sprintf("chunks/%s", GenerateHash(filename))
 
 	if !CheckPathExists(dirPath) {
 		MakeDirectory(dirPath)
@@ -45,7 +45,8 @@ func SplitFile(filePath string, chunkSize int) string {
 			totalChunks := lineCount / chunkSize
 
 			fmt.Printf("Splitting %s into %d chunks of size %d\n", filePath, totalChunks, chunkSize)
-			cmd := exec.Command("split", "-l", fmt.Sprint(chunkSize), filePath, dirPath+"/"+"chunk-")
+
+			cmd := exec.Command("split", "-l", fmt.Sprint(chunkSize), filePath, fmt.Sprintf("%s/chunk-", dirPath))
 			if _, err := cmd.Output(); err != nil {
 				panic(err)
 			}

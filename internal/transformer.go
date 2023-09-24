@@ -16,7 +16,7 @@ func NewTransformer(transformType TransformType, filePath string) Transformer {
 	var transformer Transformer
 
 	filename := GetFileName(filePath)
-	dirPath := "output/" + GenerateHash(filename) // TODO: convert to sprintf
+	dirPath := fmt.Sprintf("output/%s", GenerateHash(filename))
 	MakeDirectory(dirPath)
 
 	switch transformType {
@@ -41,7 +41,8 @@ func (dt DynamoDBTransformer) Transform(records [][]string) {
 		panic(err)
 	}
 
-	file, err := os.Create(dt.dirPath + "/" + ksuid.New().String() + ".json")
+	uid := ksuid.New().String()
+	file, err := os.Create(fmt.Sprintf("%s/%s.json", dt.dirPath, uid))
 	if err != nil {
 		panic(err)
 	}

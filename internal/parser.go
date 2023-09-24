@@ -23,7 +23,7 @@ func ParseChunk(chunk *os.File, transformer Transformer, batchSize int, delimite
 
 	for {
 		record, err := reader.Read()
-
+		// TODO: skip header
 		if err == io.EOF {
 			// Remaining records when window size is less than batch size
 			if len(records) != 0 {

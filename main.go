@@ -22,6 +22,7 @@ func main() {
 
 	internal.MeasureExecTime("processing", func() {
 		fmt.Println("processing with batch size", config.BatchSize)
+
 		for chunk := range chunks {
 			wg.Add(1)
 
