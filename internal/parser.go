@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-func ProcessChunk(chunk *os.File, batchSize int, transformer Transformer) {
+func ParseChunk(chunk *os.File, transformer Transformer, batchSize int, delimiter rune) {
 	defer chunk.Close()
 
 	var wg sync.WaitGroup
@@ -19,6 +19,7 @@ func ProcessChunk(chunk *os.File, batchSize int, transformer Transformer) {
 	}
 
 	reader := csv.NewReader(chunk)
+	reader.Comma = delimiter
 
 	for {
 		record, err := reader.Read()

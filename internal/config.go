@@ -17,11 +17,12 @@ const (
 type Config struct {
 	FilePath      string        `yaml:"file_path"`
 	TransformType TransformType `yaml:"transform_type"`
-	Delimiter     string        `yaml:"delimiter,omitempty"`
+	Delimiter     rune          `yaml:"delimiter,omitempty"`
 	ChunkSize     int           `yaml:"chunk_size"`
 	BatchSize     int           `yaml:"batch_size"`
 }
 
+// TODO: schema
 func NewConfig(path string) Config {
 	file, err := os.ReadFile(path)
 	if err != nil {
@@ -29,7 +30,7 @@ func NewConfig(path string) Config {
 	}
 
 	var config Config
-	config.Delimiter = "," // Default delimiter is comma
+	config.Delimiter = ',' // Default delimiter is comma (,)
 
 	err = yaml.Unmarshal(file, &config)
 	if err != nil {
