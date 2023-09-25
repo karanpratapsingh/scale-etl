@@ -11,46 +11,47 @@ import (
 var args internal.Args = internal.ParseArgs()
 var config internal.Config = internal.NewConfig(args.ConfigPath)
 
-var chunks = make(chan *os.File)
-var processed = make(chan struct{}) // Signal
+var partitions = make(chan *os.File)
+var processed = make(chan struct{}) // TODO: do we need this?
 
 func main() {
 	var transformer = internal.NewTransformer(config.TransformType, config.FilePath, config.OutputDir)
 
-	dirPath, chunksBuffers := internal.SplitInputFile(config.FilePath, config.ProcessDir, config.ChunkSize, config.BufferSize)
+	dirPath, partitionBatches := internal.PartitionFile(config.FilePath, config.PartitionDir, config.PartitionSize, config.BatchSize)
 
-	go internal.MeasureExecTime("reading chunks", func() {
-		internal.ReadChunksBuffers(dirPath, chunksBuffers, chunks, processed) // Layer 1
+	go internal.MeasureExecTime("reading partitions", func() {
+		internal.ReadPartitionBatches(dirPath, partitionBatches, partitions, processed) // Layer 1
 	})
 
 	internal.MeasureExecTime(
 		fmt.Sprintf("processing with batch size %d", config.BatchSize),
 		func() {
-			var wgChunks sync.WaitGroup
-			processChunks(&wgChunks, chunksBuffers, transformer) // Layer 2
+			var wgPartition sync.WaitGroup
+			processPartitions(&wgPartition, partitionBatches, transformer) // Layer 2
 		})
 }
 
-func processChunks(wg *sync.WaitGroup, chunksBuffers [][]fs.DirEntry, transformer internal.Transformer) {
-	for i, chunksBuffer := range chunksBuffers {
-		for range chunksBuffer {
-			chunk := <-chunks
+func processPartitions(wg *sync.WaitGroup, partitionBatches [][]fs.DirEntry, transformer internal.Transformer) {
+	for i, batch := range partitionBatches {
+		for range batch {
+			partition := <-partitions
 			wg.Add(1)
 
-			go func(chunk *os.File, wg *sync.WaitGroup) {
+			go func(wg *sync.WaitGroup, partition *os.File) {
 				defer wg.Done()
 
-				internal.ParseChunk(
+				internal.ProcessPartition(
 					wg,
-					chunk,
+					partition,
 					config.Schema,
-					config.BatchSize,
+					config.SegmentSize,
 					config.Delimiter,
 					transformer,
 				)
-			}(chunk, wg)
+			}(wg, partition)
 		}
 
+		fmt.Println(batch)
 		wg.Wait()
 		fmt.Println("processed batch", i+1)
 		processed <- struct{}{}
