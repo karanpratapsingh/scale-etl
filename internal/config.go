@@ -17,13 +17,13 @@ const (
 type Config struct {
 	FilePath      string        `yaml:"file_path"`
 	TransformType TransformType `yaml:"transform_type"`
-	Delimiter     rune          `yaml:"delimiter,omitempty"`
-	ChunkSize     int           `yaml:"chunk_size"`
-	BatchSize     int           `yaml:"batch_size"`
+	BatchSize     int           `yaml:"batch_size,omitempty"`
+	PartitionSize int           `yaml:"partition_size"`
+	SegmentSize   int           `yaml:"segment_size"`
 	Schema        Schema        `yaml:"schema"`
-	BufferSize    int           `yaml:"buffer_size,omitempty"`
-	ProcessDir    string        `yaml:"process_dir,omitempty"`
+	PartitionDir  string        `yaml:"partition_dir,omitempty"`
 	OutputDir     string        `yaml:"output_dir,omitempty"`
+	Delimiter     rune          `yaml:"delimiter,omitempty"`
 }
 
 func NewConfig(path string) Config {
@@ -36,16 +36,16 @@ func NewConfig(path string) Config {
 
 	// Set defaults
 	config.Delimiter = ','
-	config.BufferSize = 5
-	config.ProcessDir = "chunks"
+	config.BatchSize = 5
+	config.PartitionDir = "partitions"
 	config.OutputDir = "output"
 
 	if err = yaml.Unmarshal(file, &config); err != nil {
 		panic(fmt.Sprintf("error unmarshalling YAML: %v\n", err))
 	}
 
-	if config.BufferSize < 1 {
-		panic("buffer size cannot be less than 1")
+	if config.BatchSize < 1 {
+		panic("batch size cannot be less than 1")
 	}
 
 	if len(config.Schema.Fields) == 0 {
