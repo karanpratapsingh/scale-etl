@@ -11,7 +11,7 @@ func MeasureExecTime(id string, function func()) {
 	function()
 	// PrintMemoryUsage() // TODO: Enable with debug flag?
 	duration := time.Since(start)
-	fmt.Printf("%s took %s\n", id, duration)
+	fmt.Printf("%s (%s)\n", id, duration)
 }
 
 func PrintMemoryUsage() {

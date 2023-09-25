@@ -3,57 +3,59 @@ package main
 import (
 	"csv-ingest/internal"
 	"fmt"
-	"io/fs"
-	"os"
 	"sync"
 )
 
 var args internal.Args = internal.ParseArgs()
 var config internal.Config = internal.NewConfig(args.ConfigPath)
 
-var partitions = make(chan *os.File)
-var processed = make(chan struct{}) // TODO: do we need this?
-
 func main() {
+	var fs = internal.NewFS(config.FilePath, config.PartitionDir, config.OutputDir)
 	var transformer = internal.NewTransformer(config.TransformType, config.FilePath, config.OutputDir)
+	var processor = internal.NewProcessor(fs, transformer)
 
-	dirPath, partitionBatches := internal.PartitionFile(config.FilePath, config.PartitionDir, config.PartitionSize, config.BatchSize)
-
-	go internal.MeasureExecTime("reading partitions", func() {
-		internal.ReadPartitionBatches(dirPath, partitionBatches, partitions, processed) // Layer 1
-	})
+	partitions, totalPartitions := fs.PartitionFile(config.PartitionSize, config.BatchSize)
 
 	internal.MeasureExecTime(
-		fmt.Sprintf("processing with batch size %d", config.BatchSize),
+		"finished",
 		func() {
-			var wgPartition sync.WaitGroup
-			processPartitions(&wgPartition, partitionBatches, transformer) // Layer 2
+			processPartitions(partitions, totalPartitions, config.BatchSize, processor) // Layer 2
 		})
 }
 
-func processPartitions(wg *sync.WaitGroup, partitionBatches [][]fs.DirEntry, transformer internal.Transformer) {
-	for i, batch := range partitionBatches {
-		for range batch {
+func processPartitions(partitions chan string, totalPartitions, batchSize int, processor internal.Processor) {
+	var wg sync.WaitGroup
+
+	N := totalPartitions
+
+	total := 0
+	for i := 0; i < N; i += batchSize {
+		end := i + batchSize
+		if end > N {
+			end = N
+		}
+
+		batchNo := i / batchSize
+
+		fmt.Println("processing batch", batchNo)
+		for j := i; j < end; j += 1 {
 			partition := <-partitions
+
 			wg.Add(1)
-
-			go func(wg *sync.WaitGroup, partition *os.File) {
+			go func(wg *sync.WaitGroup, partition string) {
 				defer wg.Done()
-
-				internal.ProcessPartition(
+				total += 1
+				processor.ProcessPartition(
 					wg,
 					partition,
 					config.Schema,
 					config.SegmentSize,
 					config.Delimiter,
-					transformer,
 				)
-			}(wg, partition)
+			}(&wg, partition)
 		}
 
-		fmt.Println(batch)
 		wg.Wait()
-		fmt.Println("processed batch", i+1)
-		processed <- struct{}{}
+		fmt.Println("completed batch", batchNo)
 	}
 }

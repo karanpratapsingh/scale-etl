@@ -2,49 +2,55 @@ package internal
 
 import (
 	"fmt"
-	"io/fs"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 )
 
-// TODO: [][]fs.DirEntry -> paths?
-func ReadPartitionBatches(dirPath string, partitionBatches [][]fs.DirEntry, partitions chan *os.File, processed chan struct{}) {
-	for _, batch := range partitionBatches {
-		for _, file := range batch {
-			if !file.IsDir() {
-				partition, err := os.Open(fmt.Sprintf("%s/%s", dirPath, file.Name()))
-				if err != nil {
-					panic(err)
-				}
-				partitions <- partition
-			}
-		}
-		<-processed
-	}
-
-	close(partitions)
+type FS struct {
+	filePath       string
+	filename       string
+	hashedFilename string
+	partitionPath  string
+	outputPath     string
 }
 
-func PartitionFile(filePath string, partitionDir string, partitionSize int, batchSize int) (string, [][]fs.DirEntry) {
-	if !PathExists(filePath) {
+func NewFS(filePath string, partitionDir string, outputDir string) FS {
+	filename := GetFileName(filePath)
+	hashedFilename := GenerateHash(filename)
+	partitionPath := fmt.Sprintf("%s/%s", partitionDir, hashedFilename)
+	outputPath := fmt.Sprintf("%s/%s", outputDir, hashedFilename)
+
+	return FS{
+		filePath,
+		filename,
+		hashedFilename,
+		partitionPath,
+		outputPath,
+	}
+}
+
+func (f FS) PartitionFile(partitionSize int, batchSize int) (chan string, int) {
+	if !PathExists(f.filePath) {
 		panic("file doesn't exist")
 	}
 
-	filename := GetFileName(filePath)
-	dirPath := fmt.Sprintf("%s/%s", partitionDir, GenerateHash(filename))
-
-	lineCount := countLinesInFile(filePath)
+	lineCount := countLinesInFile(f.filePath)
 	totalPartitions := lineCount / partitionSize
 
-	if !PathExists(dirPath) {
-		MakeDirectory(dirPath)
+	if !PathExists(f.partitionPath) {
+		MakeDirectory(f.partitionPath)
 
 		MeasureExecTime("splitting", func() {
-			fmt.Printf("splitting %s into %d partitions of size %d\n", filePath, totalPartitions, partitionSize)
+			fmt.Printf("splitting %s into %d partitions of size %d\n", f.filename, totalPartitions, partitionSize)
 
-			cmd := exec.Command("split", "-l", fmt.Sprint(partitionSize), filePath, fmt.Sprintf("%s/partition-", dirPath))
+			cmd := exec.Command(
+				"split", "-l",
+				fmt.Sprint(partitionSize), f.filePath,
+				fmt.Sprintf("%s/partition-", f.partitionPath),
+			)
+
 			if _, err := cmd.Output(); err != nil {
 				panic(err)
 			}
@@ -53,15 +59,46 @@ func PartitionFile(filePath string, partitionDir string, partitionSize int, batc
 		fmt.Println("partitions found")
 	}
 
-	files, err := os.ReadDir(dirPath)
+	partitionsPaths := f.GetPartitions()
+
+	fmt.Printf("divided %d partitions into %d batches of size %d each\n", len(partitionsPaths), len(partitionsPaths)/batchSize, batchSize)
+
+	var partitions = make(chan string)
+	go func() {
+		for _, partition := range partitionsPaths {
+			partitions <- partition
+		}
+
+		close(partitions)
+	}()
+
+	return partitions, len(partitionsPaths)
+}
+
+func (f FS) OpenPartitionFile(partition string) *os.File {
+	partitionPath := fmt.Sprintf("%s/%s", f.partitionPath, partition)
+	file, err := os.Open(partitionPath)
 	if err != nil {
 		panic(err)
 	}
 
-	partitionBatches := makeBatches(files, batchSize)
-	fmt.Printf("divided %d partitions into %d batches\n", totalPartitions, len(partitionBatches))
+	return file
+}
 
-	return dirPath, partitionBatches
+func (f FS) GetPartitions() []string {
+	file, err := os.Open(f.partitionPath)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	// Edge case: Readdirnames doesn't distinguish between files and directories
+	filenames, err := file.Readdirnames(-1)
+	if err != nil {
+		panic(err)
+	}
+
+	return filenames
 }
 
 func MakeDirectory(path string) {

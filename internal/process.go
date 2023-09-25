@@ -3,23 +3,32 @@ package internal
 import (
 	"encoding/csv"
 	"io"
-	"os"
 	"sync"
 
 	mapset "github.com/deckarep/golang-set/v2"
 )
 
-func ProcessPartition(wg *sync.WaitGroup, partition *os.File, schema Schema, segmentSize int, delimiter rune, transformer Transformer) {
-	defer partition.Close()
+type Processor struct {
+	fs          FS
+	transformer Transformer
+}
+
+func NewProcessor(fs FS, transformer Transformer) Processor {
+	return Processor{fs, transformer}
+}
+
+func (p Processor) ProcessPartition(wg *sync.WaitGroup, partition string, schema Schema, segmentSize int, delimiter rune) {
+	partitionFile := p.fs.OpenPartitionFile(partition)
+	defer partitionFile.Close()
 
 	processRecords := func(wg *sync.WaitGroup, records [][]string) {
 		defer wg.Done()
-		transformer.Transform(records) // Layer 3
+		p.transformer.Transform(records) // Layer 3
 	}
 
 	var records [][]string
-	// TODO: just open file from here directly
-	reader := csv.NewReader(partition)
+
+	reader := csv.NewReader(partitionFile)
 	reader.Comma = delimiter
 
 	record, err := reader.Read()
