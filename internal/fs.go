@@ -109,9 +109,8 @@ func MakeDirectory(path string) {
 }
 
 func GetFileName(filePath string) string {
-	parts := strings.Split(filePath, ".")
-
-	return parts[0]
+	parts := strings.Split(filePath, "/")
+	return parts[len(parts)-1]
 }
 
 func PathExists(path string) bool {
