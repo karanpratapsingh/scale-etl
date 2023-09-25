@@ -11,9 +11,8 @@ import (
 var args internal.Args = internal.ParseArgs()
 var config internal.Config = internal.NewConfig(args.ConfigPath)
 
-var chunks = make(chan *os.File) // TODO: rename to queue_size
-var batches = make(chan [][]string)
-var processed = make(chan struct{})
+var chunks = make(chan *os.File)
+var processed = make(chan struct{}) // Signal
 
 func main() {
 	var transformer = internal.NewTransformer(config.TransformType, config.FilePath, config.OutputDir)
@@ -28,23 +27,11 @@ func main() {
 		fmt.Sprintf("processing with batch size %d", config.BatchSize),
 		func() {
 			var wgChunks sync.WaitGroup
-			var wgBatches sync.WaitGroup
-
-			wgChunks.Add(1)
-			go processChunks(&wgChunks, chunksBuffers) // Layer 2
-
-			wgBatches.Add(1)
-			go processBatches(&wgBatches, transformer) // Layer 3
-
-			wgChunks.Wait()
-			close(batches)
-			wgBatches.Wait()
+			processChunks(&wgChunks, chunksBuffers, transformer) // Layer 2
 		})
 }
 
-func processChunks(wg *sync.WaitGroup, chunksBuffers [][]fs.DirEntry) {
-	defer wg.Done()
-
+func processChunks(wg *sync.WaitGroup, chunksBuffers [][]fs.DirEntry, transformer internal.Transformer) {
 	for i, chunksBuffer := range chunksBuffers {
 		for range chunksBuffer {
 			chunk := <-chunks
@@ -52,29 +39,20 @@ func processChunks(wg *sync.WaitGroup, chunksBuffers [][]fs.DirEntry) {
 
 			go func(chunk *os.File, wg *sync.WaitGroup) {
 				defer wg.Done()
+
 				internal.ParseChunk(
+					wg,
 					chunk,
-					batches,
 					config.Schema,
 					config.BatchSize,
 					config.Delimiter,
+					transformer,
 				)
 			}(chunk, wg)
 		}
-		fmt.Println("completed", i+1)
+
+		wg.Wait()
+		fmt.Println("processed batch", i+1)
 		processed <- struct{}{}
-	}
-}
-
-func processBatches(wg *sync.WaitGroup, transformer internal.Transformer) {
-	defer wg.Done()
-
-	for records := range batches {
-		wg.Add(1)
-
-		go func(records [][]string, wg *sync.WaitGroup) {
-			defer wg.Done()
-			transformer.Transform(records)
-		}(records, wg)
 	}
 }

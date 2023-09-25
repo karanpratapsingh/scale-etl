@@ -20,7 +20,6 @@ func ReadChunksBuffers(dirPath string, chunksBuffers [][]fs.DirEntry, chunks cha
 				chunks <- chunk
 			}
 		}
-		fmt.Println("sent", buffer)
 		<-processed
 	}
 

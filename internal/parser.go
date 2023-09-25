@@ -4,12 +4,18 @@ import (
 	"encoding/csv"
 	"io"
 	"os"
+	"sync"
 
 	mapset "github.com/deckarep/golang-set/v2"
 )
 
-func ParseChunk(chunk *os.File, batches chan [][]string, schema Schema, batchSize int, delimiter rune) {
+func ParseChunk(wg *sync.WaitGroup, chunk *os.File, schema Schema, batchSize int, delimiter rune, transformer Transformer) {
 	defer chunk.Close()
+
+	processRecords := func(wg *sync.WaitGroup, records [][]string) {
+		defer wg.Done()
+		transformer.Transform(records) // Layer 3
+	}
 
 	var records [][]string
 
@@ -33,7 +39,8 @@ func ParseChunk(chunk *os.File, batches chan [][]string, schema Schema, batchSiz
 		if err == io.EOF {
 			// Remaining records when window size is less than batch size
 			if len(records) != 0 {
-				batches <- copySlice(records)
+				wg.Add(1)
+				go processRecords(wg, copySlice(records))
 			}
 			break
 		} else if err != nil {
@@ -43,8 +50,9 @@ func ParseChunk(chunk *os.File, batches chan [][]string, schema Schema, batchSiz
 		records = append(records, record)
 
 		if len(records) == batchSize {
-			batches <- copySlice(records) // Copy slice for goroutine
-			records = records[:0]         // Reset batch window
+			wg.Add(1)
+			go processRecords(wg, copySlice(records)) // Copy slice for goroutine
+			records = records[:0]                     // Reset batch window
 		}
 	}
 }
