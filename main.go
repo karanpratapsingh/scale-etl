@@ -25,8 +25,8 @@ func processPartitions(n int, partitions chan string, batchSize int, processor i
 	var wg sync.WaitGroup
 
 	for i := 0; i < n; i += batchSize {
-		batchNo := i / batchSize
-		end := min(n, i+batchSize)
+		batchNo := i/batchSize + 1
+		end := min(n, i+batchSize) // Last batch be less than batchSize
 
 		internal.MeasureExecTime(fmt.Sprintf("processed batch %d", batchNo), func() {
 			for j := i; j < end; j += 1 {
