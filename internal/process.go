@@ -9,8 +9,8 @@ import (
 	mapset "github.com/deckarep/golang-set/v2"
 )
 
-func ParseChunk(wg *sync.WaitGroup, chunk *os.File, schema Schema, batchSize int, delimiter rune, transformer Transformer) {
-	defer chunk.Close()
+func ProcessPartition(wg *sync.WaitGroup, partition *os.File, schema Schema, segmentSize int, delimiter rune, transformer Transformer) {
+	defer partition.Close()
 
 	processRecords := func(wg *sync.WaitGroup, records [][]string) {
 		defer wg.Done()
@@ -18,8 +18,8 @@ func ParseChunk(wg *sync.WaitGroup, chunk *os.File, schema Schema, batchSize int
 	}
 
 	var records [][]string
-
-	reader := csv.NewReader(chunk)
+	// TODO: just open file from here directly
+	reader := csv.NewReader(partition)
 	reader.Comma = delimiter
 
 	record, err := reader.Read()
@@ -49,7 +49,7 @@ func ParseChunk(wg *sync.WaitGroup, chunk *os.File, schema Schema, batchSize int
 
 		records = append(records, record)
 
-		if len(records) == batchSize {
+		if len(records) == segmentSize {
 			wg.Add(1)
 			go processRecords(wg, copySlice(records)) // Copy slice for goroutine
 			records = records[:0]                     // Reset batch window

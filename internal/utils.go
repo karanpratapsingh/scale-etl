@@ -8,8 +8,8 @@ func copySlice(input [][]string) [][]string {
 	return copiedSlice
 }
 
-func chunk[T any](items []T, batchSize int) [][]T {
-	var chunks [][]T
+func makeBatches[T any](items []T, batchSize int) [][]T {
+	var batches [][]T
 	N := len(items)
 
 	for i := 0; i < N; i += batchSize {
@@ -17,8 +17,8 @@ func chunk[T any](items []T, batchSize int) [][]T {
 		if end > N {
 			end = N
 		}
-		chunks = append(chunks, items[i:end])
+		batches = append(batches, items[i:end])
 	}
 
-	return chunks
+	return batches
 }
