@@ -16,11 +16,9 @@ func main() {
 
 	total, partitions := fs.PartitionFile(config.PartitionSize, config.BatchSize)
 
-	internal.MeasureExecTime(
-		"finished",
-		func() {
-			processPartitions(total, partitions, config.BatchSize, processor) // Layer 2
-		})
+	internal.MeasureExecTime("finished", func() {
+		processPartitions(total, partitions, config.BatchSize, processor) // Layer 2
+	})
 }
 
 func processPartitions(n int, partitions chan string, batchSize int, processor internal.Processor) {
