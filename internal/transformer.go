@@ -42,6 +42,8 @@ type DynamoDBTransformer struct {
 }
 
 func (dt DynamoDBTransformer) Transform(records [][]string) {
+	// dynamodbTypes
+
 	// TODO: table name is required for dynamodb
 	// TODO: try batch size 25 with channel
 

@@ -9,48 +9,48 @@ import (
 	"strings"
 )
 
-func ReadChunksBuffers(dirPath string, chunksBuffers [][]fs.DirEntry, chunks chan *os.File, processed chan struct{}) {
-	for _, buffer := range chunksBuffers {
-		for _, file := range buffer {
+// TODO: [][]fs.DirEntry -> paths?
+func ReadPartitionBatches(dirPath string, partitionBatches [][]fs.DirEntry, partitions chan *os.File, processed chan struct{}) {
+	for _, batch := range partitionBatches {
+		for _, file := range batch {
 			if !file.IsDir() {
-				chunk, err := os.Open(fmt.Sprintf("%s/%s", dirPath, file.Name()))
+				partition, err := os.Open(fmt.Sprintf("%s/%s", dirPath, file.Name()))
 				if err != nil {
 					panic(err)
 				}
-				chunks <- chunk
+				partitions <- partition
 			}
 		}
 		<-processed
 	}
 
-	close(chunks)
+	close(partitions)
 }
 
-func SplitInputFile(filePath string, processDir string, chunkSize int, bufferSize int) (string, [][]fs.DirEntry) {
+func PartitionFile(filePath string, partitionDir string, partitionSize int, batchSize int) (string, [][]fs.DirEntry) {
 	if !PathExists(filePath) {
 		panic("file doesn't exist")
 	}
 
 	filename := GetFileName(filePath)
-	dirPath := fmt.Sprintf("%s/%s", processDir, GenerateHash(filename))
+	dirPath := fmt.Sprintf("%s/%s", partitionDir, GenerateHash(filename))
 
 	lineCount := countLinesInFile(filePath)
-	totalChunks := lineCount / chunkSize
+	totalPartitions := lineCount / partitionSize
 
 	if !PathExists(dirPath) {
 		MakeDirectory(dirPath)
 
 		MeasureExecTime("splitting", func() {
+			fmt.Printf("splitting %s into %d partitions of size %d\n", filePath, totalPartitions, partitionSize)
 
-			fmt.Printf("Splitting %s into %d chunks of size %d\n", filePath, totalChunks, chunkSize)
-
-			cmd := exec.Command("split", "-l", fmt.Sprint(chunkSize), filePath, fmt.Sprintf("%s/chunk-", dirPath))
+			cmd := exec.Command("split", "-l", fmt.Sprint(partitionSize), filePath, fmt.Sprintf("%s/partition-", dirPath))
 			if _, err := cmd.Output(); err != nil {
 				panic(err)
 			}
 		})
 	} else {
-		fmt.Println("chunks found, skipping chunking")
+		fmt.Println("partitions found")
 	}
 
 	files, err := os.ReadDir(dirPath)
@@ -58,10 +58,10 @@ func SplitInputFile(filePath string, processDir string, chunkSize int, bufferSiz
 		panic(err)
 	}
 
-	chunksBuffers := chunk(files, bufferSize)
-	fmt.Printf("divided %d chunks into %d buffers\n", totalChunks, len(chunksBuffers))
+	partitionBatches := makeBatches(files, batchSize)
+	fmt.Printf("divided %d partitions into %d batches\n", totalPartitions, len(partitionBatches))
 
-	return dirPath, chunksBuffers
+	return dirPath, partitionBatches
 }
 
 func MakeDirectory(path string) {
