@@ -14,48 +14,41 @@ func main() {
 	var transformer = internal.NewTransformer(config.TransformType, config.FilePath, config.OutputDir)
 	var processor = internal.NewProcessor(fs, transformer)
 
-	partitions, totalPartitions := fs.PartitionFile(config.PartitionSize, config.BatchSize)
+	total, partitions := fs.PartitionFile(config.PartitionSize, config.BatchSize)
 
 	internal.MeasureExecTime(
 		"finished",
 		func() {
-			processPartitions(partitions, totalPartitions, config.BatchSize, processor) // Layer 2
+			processPartitions(total, partitions, config.BatchSize, processor) // Layer 2
 		})
 }
 
-func processPartitions(partitions chan string, totalPartitions, batchSize int, processor internal.Processor) {
+func processPartitions(n int, partitions chan string, batchSize int, processor internal.Processor) {
 	var wg sync.WaitGroup
 
-	N := totalPartitions
-
-	total := 0
-	for i := 0; i < N; i += batchSize {
-		end := i + batchSize
-		if end > N {
-			end = N
-		}
-
+	for i := 0; i < n; i += batchSize {
 		batchNo := i / batchSize
+		end := min(n, i+batchSize)
 
-		fmt.Println("processing batch", batchNo)
-		for j := i; j < end; j += 1 {
-			partition := <-partitions
+		internal.MeasureExecTime(fmt.Sprintf("processed batch %d", batchNo), func() {
+			for j := i; j < end; j += 1 {
+				partition := <-partitions
 
-			wg.Add(1)
-			go func(wg *sync.WaitGroup, partition string) {
-				defer wg.Done()
-				total += 1
-				processor.ProcessPartition(
-					wg,
-					partition,
-					config.Schema,
-					config.SegmentSize,
-					config.Delimiter,
-				)
-			}(&wg, partition)
-		}
+				wg.Add(1)
+				go func(wg *sync.WaitGroup, partition string) {
+					defer wg.Done()
+
+					processor.ProcessPartition(
+						wg,
+						partition,
+						config.Schema,
+						config.SegmentSize,
+						config.Delimiter,
+					)
+				}(&wg, partition)
+			}
+		})
 
 		wg.Wait()
-		fmt.Println("completed batch", batchNo)
 	}
 }

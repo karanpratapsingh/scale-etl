@@ -31,7 +31,7 @@ func NewFS(filePath string, partitionDir string, outputDir string) FS {
 	}
 }
 
-func (f FS) PartitionFile(partitionSize int, batchSize int) (chan string, int) {
+func (f FS) PartitionFile(partitionSize int, batchSize int) (int, chan string) {
 	if !PathExists(f.filePath) {
 		panic("file doesn't exist")
 	}
@@ -42,8 +42,8 @@ func (f FS) PartitionFile(partitionSize int, batchSize int) (chan string, int) {
 	if !PathExists(f.partitionPath) {
 		MakeDirectory(f.partitionPath)
 
-		MeasureExecTime("splitting", func() {
-			fmt.Printf("splitting %s into %d partitions of size %d\n", f.filename, totalPartitions, partitionSize)
+		MeasureExecTime("partitioning finished", func() {
+			fmt.Printf("partitioning %s into %d partitions of size %d\n", f.filename, totalPartitions, partitionSize)
 
 			cmd := exec.Command(
 				"split", "-l",
@@ -60,8 +60,9 @@ func (f FS) PartitionFile(partitionSize int, batchSize int) (chan string, int) {
 	}
 
 	partitionsPaths := f.GetPartitions()
+	totalBatches := len(partitionsPaths)/batchSize + len(partitionsPaths)%batchSize
 
-	fmt.Printf("divided %d partitions into %d batches of size %d each\n", len(partitionsPaths), len(partitionsPaths)/batchSize, batchSize)
+	fmt.Printf("divided %d partitions into %d batches of size %d each\n", len(partitionsPaths), totalBatches, batchSize)
 
 	var partitions = make(chan string)
 	go func() {
@@ -72,7 +73,7 @@ func (f FS) PartitionFile(partitionSize int, batchSize int) (chan string, int) {
 		close(partitions)
 	}()
 
-	return partitions, len(partitionsPaths)
+	return len(partitionsPaths), partitions
 }
 
 func (f FS) OpenPartitionFile(partition string) *os.File {
