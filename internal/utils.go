@@ -2,7 +2,6 @@ package internal
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"sync/atomic"
 )
@@ -39,17 +38,5 @@ func parseValue(fieldValue string, fieldType string) any {
 		return val
 	default:
 		panic(fmt.Sprintf("field type %s is not supported", fieldType))
-	}
-}
-
-func writeFile(path string, data []byte) {
-	file, err := os.Create(path)
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
-	if _, err = file.Write(data); err != nil {
-		panic(err)
 	}
 }

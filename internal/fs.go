@@ -103,6 +103,20 @@ func (f FS) getPartitions() []string {
 	return filenames
 }
 
+func (f FS) writeFile(path string, extension string, data []byte) {
+	filePath := fmt.Sprintf("%s/%s.%s", f.outputPath, path, extension)
+
+	file, err := os.Create(filePath)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	if _, err = file.Write(data); err != nil {
+		panic(err)
+	}
+}
+
 func makeDirectory(path string) {
 	if err := os.MkdirAll(path, 0777); err != nil {
 		panic(err)
