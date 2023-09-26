@@ -1,6 +1,9 @@
 run:
 	go run main.go
 
+clean:
+	rm -rf partitions output
+
 generate_sample_data:
 	go run scripts/generate_sample_data.go samples/sample_1k.csv 1000
 	du -sh samples/sample_1k.csv
