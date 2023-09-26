@@ -16,7 +16,7 @@ func MeasureExecTime(id string, function func()) {
 func printInputFileInfo(filePath string, totalRows int, delimiter rune) {
 	inputFileSize := getFileSize(filePath)
 
-	fmt.Printf("File: %s, Size: %d MB, Rows: %d, Delimiter: %s\n", filePath, inputFileSize, totalRows, string(delimiter))
+	fmt.Printf("File: %s, Size: %f MB, Rows: %d, Delimiter: '%s'\n", filePath, inputFileSize, totalRows, string(delimiter))
 }
 
 func printPartitionInfo(totalPartitions, partitionSize, totalBatches, batchSize int) {

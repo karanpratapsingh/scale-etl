@@ -41,7 +41,11 @@ func NewConfig(path string) Config {
 	config.OutputDir = "output"
 
 	if err = yaml.Unmarshal(file, &config); err != nil {
-		panic(fmt.Sprintf("error unmarshalling yaml: %v\n", err))
+		panic(fmt.Errorf("error unmarshalling yaml: %v", err))
+	}
+
+	if !pathExists(config.FilePath) {
+		panic(fmt.Sprintf("file %s doesn't exist", config.FilePath))
 	}
 
 	if config.BatchSize < 1 {

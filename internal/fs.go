@@ -32,15 +32,11 @@ func NewFS(filePath string, partitionDir string, outputDir string) FS {
 }
 
 func (f FS) PartitionFile(partitionSize int, batchSize int) (int, int, chan string) {
-	if !pathExists(f.filePath) {
-		panic("file doesn't exist")
-	}
-
 	if !pathExists(f.partitionPath) {
 		makeDirectory(f.partitionPath)
 
 		MeasureExecTime("partitioning complete", func() {
-			fmt.Printf("Partitioning %s \n", f.filename)
+			fmt.Println("Partitioning", f.filename)
 
 			cmd := exec.Command(
 				"split", "-l",
@@ -53,7 +49,7 @@ func (f FS) PartitionFile(partitionSize int, batchSize int) (int, int, chan stri
 			}
 		})
 	} else {
-		fmt.Println("Found partitions")
+		fmt.Println("Found partitions for", f.filename)
 	}
 
 	partitionsPaths := f.getPartitions()
@@ -127,7 +123,7 @@ func countFileRows(path string) int {
 
 	output, err := cmd.Output()
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to count rows for file %s: %v", path, err))
 	}
 
 	parts := strings.Fields(string(output))
@@ -140,13 +136,13 @@ func countFileRows(path string) int {
 	return lineCount
 }
 
-func getFileSize(path string) int64 {
+func getFileSize(path string) float64 {
 	fileInfo, err := os.Stat(path)
 	if err != nil {
 		panic(err)
 	}
 
-	return fileInfo.Size() / (1024 * 1024) // MB
+	return float64(fileInfo.Size()) / (1024 * 1024) // MB
 }
 
 func makeDirectory(path string) {
