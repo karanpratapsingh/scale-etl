@@ -2,11 +2,12 @@ package internal
 
 import (
 	"crypto/sha256"
-	"fmt"
+	"encoding/hex"
 )
 
 func generateHash(input string) string {
 	hash := sha256.Sum256([]byte(input))
+	hashString := hex.EncodeToString(hash[:])
 
-	return fmt.Sprintf("%x", hash)
+	return hashString[:16]
 }

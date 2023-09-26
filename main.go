@@ -18,7 +18,7 @@ func main() {
 	var transformer = internal.NewTransformer(fs, config.TransformType, config.Schema, totalBatches)
 	var processor = internal.NewProcessor(fs, transformer)
 
-	internal.MeasureExecTime("completed", func() {
+	internal.MeasureExecTime("Processing complete", func() {
 		processPartitions(totalPartitions, partitions, config, processor) // Layer 2
 	})
 }

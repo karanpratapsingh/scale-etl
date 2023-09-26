@@ -35,8 +35,8 @@ func (f FS) PartitionFile(partitionSize int, batchSize int) (int, int, chan stri
 	if !pathExists(f.partitionPath) {
 		makeDirectory(f.partitionPath)
 
-		MeasureExecTime("partitioning complete", func() {
-			fmt.Println("Partitioning", f.filename)
+		MeasureExecTime("Partitioning complete", func() {
+			fmt.Printf("Partitioning %s at %s\n", f.filename, f.partitionPath)
 
 			cmd := exec.Command(
 				"split", "-l",
@@ -44,7 +44,11 @@ func (f FS) PartitionFile(partitionSize int, batchSize int) (int, int, chan stri
 				fmt.Sprintf("%s/partition-", f.partitionPath),
 			)
 
-			if _, err := cmd.Output(); err != nil {
+			if err := cmd.Start(); err != nil {
+				panic(err)
+			}
+
+			if err := cmd.Wait(); err != nil {
 				panic(err)
 			}
 		})
