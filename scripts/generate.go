@@ -25,7 +25,7 @@ type Product struct {
 	Price   int
 	InStock bool
 }
-
+// TODO: make it part of "commands" as generate_sample and read from schema?
 func main() {
 	start := time.Now()
 

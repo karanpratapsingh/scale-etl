@@ -95,16 +95,7 @@ func (dt *DynamoDBTransformer) Transform(records [][]string) {
 
 	path := fmt.Sprintf("%s/%d.json", dt.fs.outputPath, filename)
 
-	// TODO: make it a function
-	file, err := os.Create(path)
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
-	if _, err = file.Write(jsonData); err != nil {
-		panic(err)
-	}
+	writeFile(path, jsonData)
 }
 
 type ParquetTransformer struct {
