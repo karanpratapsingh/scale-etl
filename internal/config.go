@@ -17,7 +17,6 @@ const (
 type Config struct {
 	FilePath      string        `yaml:"file_path"`
 	TransformType TransformType `yaml:"transform_type"`
-	TableName     string        `yaml:"table_name"`
 	BatchSize     int           `yaml:"batch_size,omitempty"`
 	PartitionSize int           `yaml:"partition_size"`
 	SegmentSize   int           `yaml:"segment_size"`
@@ -42,7 +41,7 @@ func NewConfig(path string) Config {
 	config.OutputDir = "output"
 
 	if err = yaml.Unmarshal(file, &config); err != nil {
-		panic(fmt.Sprintf("error unmarshalling YAML: %v\n", err))
+		panic(fmt.Sprintf("error unmarshalling yaml: %v\n", err))
 	}
 
 	if config.BatchSize < 1 {
@@ -57,8 +56,14 @@ func NewConfig(path string) Config {
 		panic("schema definition is required")
 	}
 
-	if config.TransformType == TransformTypeDynamoDB && config.TableName == "" {
-		panic("table name is required for transform type dynamodb")
+	if config.TransformType == TransformTypeDynamoDB {
+		if config.Schema.TableName == "" {
+			panic("table name is required for transform type dynamodb")
+		}
+
+		if config.Schema.Key == "" {
+			panic("key is required for transform type dynamodb")
+		}
 	}
 
 	fmt.Println("loaded config from", path)
