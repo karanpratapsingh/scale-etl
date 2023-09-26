@@ -10,8 +10,9 @@ var args internal.Args = internal.ParseArgs()
 var config internal.Config = internal.NewConfig(args.ConfigPath)
 
 func main() {
+	// TODO: global recover
 	var fs = internal.NewFS(config.FilePath, config.PartitionDir, config.OutputDir)
-	var transformer = internal.NewTransformer(fs, config.TransformType, config.Schema, config.TableName)
+	var transformer = internal.NewTransformer(fs, config.TransformType, config.Schema)
 	var processor = internal.NewProcessor(fs, transformer)
 
 	total, partitions := fs.PartitionFile(config.PartitionSize, config.BatchSize)
