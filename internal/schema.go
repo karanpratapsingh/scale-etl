@@ -6,7 +6,7 @@ type Schema struct {
 	TableName string
 	Key       string
 	Header    mapset.Set[string]
-	Fields    []string // TODO: rename to columns
+	Columns   []string
 	Types     map[string]string
 }
 
@@ -14,7 +14,7 @@ func (s *Schema) UnmarshalYAML(unmarshal func(any) error) error {
 	var yamlSchema struct { // YAML schema
 		TableName string              `yaml:"table_name"`
 		Key       string              `yaml:"key"`
-		Fields    []map[string]string `yaml:"fields"`
+		Columns   []map[string]string `yaml:"columns"`
 	}
 
 	if err := unmarshal(&yamlSchema); err != nil {
@@ -25,14 +25,14 @@ func (s *Schema) UnmarshalYAML(unmarshal func(any) error) error {
 	s.Key = yamlSchema.Key
 	s.Types = make(map[string]string)
 
-	for _, fieldMap := range yamlSchema.Fields {
-		for fieldName, fieldType := range fieldMap {
-			s.Fields = append(s.Fields, fieldName)
-			s.Types[fieldName] = fieldType
+	for _, columnMap := range yamlSchema.Columns {
+		for columnName, columnType := range columnMap {
+			s.Columns = append(s.Columns, columnName)
+			s.Types[columnName] = columnType
 		}
 	}
 
-	s.Header = mapset.NewSet(s.Fields...)
+	s.Header = mapset.NewSet(s.Columns...)
 
 	return nil
 }

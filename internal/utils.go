@@ -26,17 +26,17 @@ func copySlice[T any](input [][]T) [][]T {
 	return copiedSlice
 }
 
-func parseValue(fieldValue string, fieldType string) any {
-	switch fieldType {
+func parseValue(columnValue string, columnType string) any {
+	switch columnType {
 	case "string", "number": // DynamoDB auto parses number type from string
-		return fieldValue
+		return columnValue
 	case "bool":
-		val, err := strconv.ParseBool(fieldValue)
+		val, err := strconv.ParseBool(columnValue)
 		if err != nil {
 			panic(err)
 		}
 		return val
 	default:
-		panic(fmt.Sprintf("field type %s is not supported", fieldType))
+		panic(fmt.Sprintf("column type %s is not supported", columnType))
 	}
 }

@@ -52,7 +52,7 @@ func NewConfig(path string) Config {
 		panic("segment size should be less than partition size")
 	}
 
-	if len(config.Schema.Fields) == 0 {
+	if len(config.Schema.Columns) == 0 {
 		panic("schema definition is required")
 	}
 

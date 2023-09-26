@@ -26,11 +26,11 @@ func printPartitionInfo(totalPartitions, partitionSize, totalBatches, batchSize 
 }
 
 func printSchemaInfo(transformType TransformType, schema Schema) {
-	columns := make([]string, len(schema.Fields))
+	columns := make([]string, len(schema.Columns))
 
-	for i, fieldName := range schema.Fields {
-		fieldType := schema.Types[fieldName]
-		columns[i] = fmt.Sprintf("%s (%s)", fieldName, fieldType)
+	for i, columnName := range schema.Columns {
+		columnType := schema.Types[columnName]
+		columns[i] = fmt.Sprintf("%s (%s)", columnName, columnType)
 	}
 
 	tableInfo := fmt.Sprintf("Table: %s", schema.TableName)

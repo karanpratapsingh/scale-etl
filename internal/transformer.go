@@ -59,9 +59,9 @@ func (dt *DynamoDBTransformer) Transform(batchNo int, records [][]string) {
 	                "PutRequest": map
 	                    "Item": map
 	                        "Key": map
-	                            "S": "FieldName"
-	                        "FieldName": map
-	                            "S": "FieldName"
+	                            "S": "columnValue"
+	                        "columnName": map
+	                            "S": "columnValue"
 	}
 	*/
 
@@ -70,18 +70,18 @@ func (dt *DynamoDBTransformer) Transform(batchNo int, records [][]string) {
 		attributes := make(map[string]map[string]any, len(record))
 		item := make(map[string]map[string]map[string]any, 1)
 
-		for i, fieldValue := range record {
-			fieldName := dt.schema.Fields[i]
-			fieldType := dt.schema.Types[fieldName]
+		for i, columnValue := range record {
+			columnName := dt.schema.Columns[i]
+			columnType := dt.schema.Types[columnName]
 
-			if fieldName == dt.schema.Key {
+			if columnName == dt.schema.Key {
 				attributes["Key"] = map[string]any{
-					dynamodbTypes[fieldType]: parseValue(fieldValue, fieldType),
+					dynamodbTypes[columnType]: parseValue(columnValue, columnType),
 				}
 			}
 
-			attributes[fieldName] = map[string]any{
-				dynamodbTypes[fieldType]: parseValue(fieldValue, fieldType),
+			attributes[columnName] = map[string]any{
+				dynamodbTypes[columnType]: parseValue(columnValue, columnType),
 			}
 		}
 
