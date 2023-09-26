@@ -49,6 +49,10 @@ func NewConfig(path string) Config {
 		panic("batch size cannot be less than 1")
 	}
 
+	if config.SegmentSize > config.PartitionSize {
+		panic("segment size should be less than partition size")
+	}
+
 	if len(config.Schema.Fields) == 0 {
 		panic("schema definition is required")
 	}
