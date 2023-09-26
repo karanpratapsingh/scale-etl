@@ -4,31 +4,28 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-
-	"github.com/segmentio/ksuid"
 )
 
 type Transformer interface {
 	Transform(records [][]string)
 }
 
-func NewTransformer(transformType TransformType, filePath string, outputDir string) Transformer {
+func NewTransformer(fs FS, transformType TransformType, schema Schema) Transformer {
 	var transformer Transformer
 
-	filename := GetFileName(filePath)
-	dirPath := fmt.Sprintf("%s/%s", outputDir, GenerateHash(filename))
-
-	if PathExists(dirPath) { // Delete existing transform directory
-		os.RemoveAll(dirPath)
+	if pathExists(fs.outputPath) { // Delete existing transform directory
+		os.RemoveAll(fs.outputPath)
 	}
 
-	MakeDirectory(dirPath)
+	makeDirectory(fs.outputPath)
+
+	counter := NewCounter(0)
 
 	switch transformType {
 	case TransformTypeDynamoDB:
-		transformer = DynamoDBTransformer{dirPath}
+		transformer = &DynamoDBTransformer{fs, schema, counter}
 	case TransformTypeParquet:
-		transformer = ParquetTransformer{}
+		transformer = &ParquetTransformer{fs}
 	default:
 		panic("invalid transform type")
 	}
@@ -38,28 +35,25 @@ func NewTransformer(transformType TransformType, filePath string, outputDir stri
 }
 
 type DynamoDBTransformer struct {
-	dirPath string
+	fs      FS
+	schema  Schema
+	counter Counter
 }
 
-func (dt DynamoDBTransformer) Transform(records [][]string) {
-	// dynamodbTypes
-
-	// TODO: table name is required for dynamodb
-	// TODO: try batch size 25 with channel
-
-	// var transform any
-
-	// for i, record := range records {
-	// 	transform["s"] = "s"
-	// }
+func (dt *DynamoDBTransformer) Transform(records [][]string) {
+	// TODO: config: table name is required for dynamodb
+	// TODO: write parser with schema
 
 	jsonData, err := json.Marshal(records)
 	if err != nil {
 		panic(err)
 	}
 
-	uid := ksuid.New().String()
-	file, err := os.Create(fmt.Sprintf("%s/%s.json", dt.dirPath, uid))
+	filename := dt.counter.get()
+
+	path := fmt.Sprintf("%s/%d.json", dt.fs.outputPath, filename)
+
+	file, err := os.Create(path)
 	if err != nil {
 		panic(err)
 	}
@@ -70,7 +64,9 @@ func (dt DynamoDBTransformer) Transform(records [][]string) {
 	}
 }
 
-type ParquetTransformer struct{}
+type ParquetTransformer struct {
+	fs FS
+}
 
 func (ParquetTransformer) Transform(records [][]string) {
 	fmt.Println("parquet: process", len(records))

@@ -11,7 +11,7 @@ var config internal.Config = internal.NewConfig(args.ConfigPath)
 
 func main() {
 	var fs = internal.NewFS(config.FilePath, config.PartitionDir, config.OutputDir)
-	var transformer = internal.NewTransformer(config.TransformType, config.FilePath, config.OutputDir)
+	var transformer = internal.NewTransformer(fs, config.TransformType, config.Schema)
 	var processor = internal.NewProcessor(fs, transformer)
 
 	total, partitions := fs.PartitionFile(config.PartitionSize, config.BatchSize)

@@ -17,7 +17,7 @@ type FS struct {
 }
 
 func NewFS(filePath string, partitionDir string, outputDir string) FS {
-	filename := GetFileName(filePath)
+	filename := getFileName(filePath)
 	hashedFilename := GenerateHash(filename)
 	partitionPath := fmt.Sprintf("%s/%s", partitionDir, hashedFilename)
 	outputPath := fmt.Sprintf("%s/%s", outputDir, hashedFilename)
@@ -32,15 +32,15 @@ func NewFS(filePath string, partitionDir string, outputDir string) FS {
 }
 
 func (f FS) PartitionFile(partitionSize int, batchSize int) (int, chan string) {
-	if !PathExists(f.filePath) {
+	if !pathExists(f.filePath) {
 		panic("file doesn't exist")
 	}
 
 	lineCount := countLinesInFile(f.filePath)
 	totalPartitions := lineCount / partitionSize
 
-	if !PathExists(f.partitionPath) {
-		MakeDirectory(f.partitionPath)
+	if !pathExists(f.partitionPath) {
+		makeDirectory(f.partitionPath)
 
 		MeasureExecTime("partitioning finished", func() {
 			fmt.Printf("partitioning %s into %d partitions of size %d\n", f.filename, totalPartitions, partitionSize)
@@ -59,7 +59,7 @@ func (f FS) PartitionFile(partitionSize int, batchSize int) (int, chan string) {
 		fmt.Println("partitions found")
 	}
 
-	partitionsPaths := f.GetPartitions()
+	partitionsPaths := f.getPartitions()
 	totalBatches := len(partitionsPaths)/batchSize + len(partitionsPaths)%batchSize
 
 	fmt.Printf("divided %d partitions into %d batches of size %d each\n", len(partitionsPaths), totalBatches, batchSize)
@@ -76,7 +76,7 @@ func (f FS) PartitionFile(partitionSize int, batchSize int) (int, chan string) {
 	return len(partitionsPaths), partitions
 }
 
-func (f FS) OpenPartitionFile(partition string) *os.File {
+func (f FS) openPartitionFile(partition string) *os.File {
 	partitionPath := fmt.Sprintf("%s/%s", f.partitionPath, partition)
 	file, err := os.Open(partitionPath)
 	if err != nil {
@@ -86,7 +86,7 @@ func (f FS) OpenPartitionFile(partition string) *os.File {
 	return file
 }
 
-func (f FS) GetPartitions() []string {
+func (f FS) getPartitions() []string {
 	file, err := os.Open(f.partitionPath)
 	if err != nil {
 		panic(err)
@@ -102,18 +102,18 @@ func (f FS) GetPartitions() []string {
 	return filenames
 }
 
-func MakeDirectory(path string) {
+func makeDirectory(path string) {
 	if err := os.MkdirAll(path, 0777); err != nil {
 		panic(err)
 	}
 }
 
-func GetFileName(filePath string) string {
+func getFileName(filePath string) string {
 	parts := strings.Split(filePath, "/")
 	return parts[len(parts)-1]
 }
 
-func PathExists(path string) bool {
+func pathExists(path string) bool {
 	_, err := os.Stat(path)
 	if err != nil && os.IsNotExist(err) {
 		return false

@@ -18,7 +18,7 @@ func NewProcessor(fs FS, transformer Transformer) Processor {
 }
 
 func (p Processor) ProcessPartition(wg *sync.WaitGroup, partition string, schema Schema, segmentSize int, delimiter rune) {
-	partitionFile := p.fs.OpenPartitionFile(partition)
+	partitionFile := p.fs.openPartitionFile(partition)
 	defer partitionFile.Close()
 
 	processRecords := func(wg *sync.WaitGroup, records [][]string) {
