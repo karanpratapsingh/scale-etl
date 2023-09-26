@@ -40,3 +40,10 @@ func parseValue(columnValue string, columnType string) any {
 		panic(fmt.Sprintf("column type %s is not supported", columnType))
 	}
 }
+
+// TODO: Add github docs link
+func HandlePanic() {
+	if r := recover(); r != nil {
+		fmt.Println("Error:", r)
+	}
+}

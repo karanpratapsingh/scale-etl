@@ -6,11 +6,12 @@ import (
 	"sync"
 )
 
-var args internal.Args = internal.ParseArgs()
-var config internal.Config = internal.NewConfig(args.ConfigPath)
-
 func main() {
-	// TODO: global recover
+	defer internal.HandlePanic()
+
+	var args internal.Args = internal.ParseArgs()
+	var config internal.Config = internal.NewConfig(args.ConfigPath)
+
 	var fs = internal.NewFS(config.FilePath, config.PartitionDir, config.OutputDir)
 	totalPartitions, totalBatches, partitions := fs.PartitionFile(config.PartitionSize, config.BatchSize)
 
@@ -18,12 +19,13 @@ func main() {
 	var processor = internal.NewProcessor(fs, transformer)
 
 	internal.MeasureExecTime("completed", func() {
-		processPartitions(totalPartitions, partitions, config.BatchSize, processor) // Layer 2
+		processPartitions(totalPartitions, partitions, config, processor) // Layer 2
 	})
 }
 
-func processPartitions(totalPartitions int, partitions chan string, batchSize int, processor internal.Processor) {
+func processPartitions(totalPartitions int, partitions chan string, config internal.Config, processor internal.Processor) {
 	var wg sync.WaitGroup
+	batchSize := config.BatchSize
 
 	for i := 0; i < totalPartitions; i += batchSize {
 		batchNo := internal.CountBatches(i, batchSize) + 1

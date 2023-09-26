@@ -13,9 +13,8 @@ func MeasureExecTime(id string, function func()) {
 	fmt.Printf("%s [%s]\n", id, duration)
 }
 
-func printInputFileInfo(filePath string, delimiter rune) {
+func printInputFileInfo(filePath string, totalRows int, delimiter rune) {
 	inputFileSize := getFileSize(filePath)
-	totalRows := countFileRows(filePath)
 
 	fmt.Printf("File: %s, Size: %d MB, Rows: %d, Delimiter: %s\n", filePath, inputFileSize, totalRows, string(delimiter))
 }

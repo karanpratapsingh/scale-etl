@@ -49,7 +49,7 @@ func NewConfig(path string) Config {
 	}
 
 	if config.SegmentSize > config.PartitionSize {
-		panic("segment size should be less than partition size")
+		panic(fmt.Sprintf("segment size (%d) should be less than or equal to partition size (%d)", config.SegmentSize, config.PartitionSize))
 	}
 
 	if len(config.Schema.Columns) == 0 {
@@ -66,6 +66,12 @@ func NewConfig(path string) Config {
 		}
 	}
 
-	printInputFileInfo(config.FilePath, config.Delimiter)
+	totalRows := countFileRows(config.FilePath)
+
+	if config.PartitionSize > totalRows {
+		panic(fmt.Sprintf("partition size (%d) should be less than or equal to total number of rows (%d)", config.PartitionSize, totalRows))
+	}
+
+	printInputFileInfo(config.FilePath, totalRows, config.Delimiter)
 	return config
 }

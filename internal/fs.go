@@ -122,7 +122,6 @@ func (f FS) writeFile(path string, extension string, data []byte) {
 	}
 }
 
-// TODO: this crashes for smaller files
 func countFileRows(path string) int {
 	cmd := exec.Command("wc", "-l", path)
 
@@ -131,9 +130,9 @@ func countFileRows(path string) int {
 		panic(err)
 	}
 
-	parts := strings.Split(string(output), " ")
+	parts := strings.Fields(string(output))
 
-	lineCount, err := strconv.Atoi(parts[1])
+	lineCount, err := strconv.Atoi(parts[0])
 	if err != nil {
 		panic(err)
 	}
