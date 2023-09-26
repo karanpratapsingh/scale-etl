@@ -17,7 +17,7 @@ type FS struct {
 
 func NewFS(filePath string, partitionDir string, outputDir string) FS {
 	filename := getFileName(filePath)
-	hashedFilename := GenerateHash(filename)
+	hashedFilename := generateHash(filename)
 	partitionPath := fmt.Sprintf("%s/%s", partitionDir, hashedFilename)
 	outputPath := fmt.Sprintf("%s/%s", outputDir, hashedFilename)
 
@@ -30,7 +30,7 @@ func NewFS(filePath string, partitionDir string, outputDir string) FS {
 	}
 }
 
-func (f FS) PartitionFile(partitionSize int, batchSize int) (int, chan string) {
+func (f FS) PartitionFile(partitionSize int, batchSize int) (int, int, chan string) {
 	if !pathExists(f.filePath) {
 		panic("file doesn't exist")
 	}
@@ -38,7 +38,7 @@ func (f FS) PartitionFile(partitionSize int, batchSize int) (int, chan string) {
 	if !pathExists(f.partitionPath) {
 		makeDirectory(f.partitionPath)
 
-		MeasureExecTime("partitioning finished", func() {
+		MeasureExecTime("partitioning complete", func() {
 			fmt.Printf("partitioning %s into partitions of size %d\n", f.filename, partitionSize)
 
 			cmd := exec.Command(
@@ -57,7 +57,7 @@ func (f FS) PartitionFile(partitionSize int, batchSize int) (int, chan string) {
 
 	partitionsPaths := f.getPartitions()
 	totalPartitions := len(partitionsPaths)
-	totalBatches := totalPartitions/batchSize + totalPartitions%batchSize
+	totalBatches := CountBatches(totalPartitions, batchSize)
 
 	if batchSize > totalPartitions {
 		panic(fmt.Sprintf("batch size (%d) should be less than total partitions (%d)", batchSize, totalPartitions))
@@ -74,7 +74,11 @@ func (f FS) PartitionFile(partitionSize int, batchSize int) (int, chan string) {
 		close(partitions)
 	}()
 
-	return totalPartitions, partitions
+	return totalPartitions, totalBatches, partitions
+}
+
+func CountBatches(n int, batchSize int) int {
+	return n/batchSize + n%batchSize
 }
 
 func (f FS) openPartitionFile(partition string) *os.File {

@@ -7,17 +7,21 @@ import (
 )
 
 type Transformer interface {
-	Transform(records [][]string)
+	Transform(batchNo int, records [][]string)
 }
 
-func NewTransformer(fs FS, transformType TransformType, schema Schema) Transformer {
+func NewTransformer(fs FS, transformType TransformType, schema Schema, totalBatches int) Transformer {
 	var transformer Transformer
 
-	if pathExists(fs.outputPath) { // Delete existing transform directory
+	// Delete existing output directory
+	if pathExists(fs.outputPath) {
 		os.RemoveAll(fs.outputPath)
 	}
 
-	makeDirectory(fs.outputPath)
+	// Create the directories for batches
+	for i := 1; i <= totalBatches; i += 1 {
+		makeDirectory(fmt.Sprintf("%s/%d", fs.outputPath, i))
+	}
 
 	counter := NewCounter(0)
 
@@ -40,7 +44,7 @@ type DynamoDBTransformer struct {
 	counter Counter
 }
 
-func (dt *DynamoDBTransformer) Transform(records [][]string) {
+func (dt *DynamoDBTransformer) Transform(batchNo int, records [][]string) {
 	tableName := dt.schema.TableName
 
 	requestItems := make(map[string]map[string][]map[string]map[string]map[string]map[string]any, 1)
@@ -91,7 +95,8 @@ func (dt *DynamoDBTransformer) Transform(records [][]string) {
 		panic(err)
 	}
 
-	path := fmt.Sprint(dt.counter.get())
+	path := fmt.Sprintf("%d/%d", batchNo, dt.counter.get())
+	// path := fmt.Sprint(dt.counter.get())
 	dt.fs.writeFile(path, "json", jsonData)
 }
 
@@ -99,6 +104,6 @@ type ParquetTransformer struct {
 	fs FS
 }
 
-func (ParquetTransformer) Transform(records [][]string) {
-	fmt.Println("parquet: process", len(records))
+func (ParquetTransformer) Transform(batchNo int, records [][]string) {
+	fmt.Println("parquet: process", len(records), "records for batch", batchNo)
 }

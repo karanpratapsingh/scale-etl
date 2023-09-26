@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func GenerateHash(input string) string {
+func generateHash(input string) string {
 	hash := sha256.Sum256([]byte(input))
 
 	return fmt.Sprintf("%x", hash)

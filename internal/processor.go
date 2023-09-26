@@ -17,13 +17,13 @@ func NewProcessor(fs FS, transformer Transformer) Processor {
 	return Processor{fs, transformer}
 }
 
-func (p Processor) ProcessPartition(wg *sync.WaitGroup, partition string, schema Schema, segmentSize int, delimiter rune) {
+func (p Processor) ProcessPartition(wg *sync.WaitGroup, batchNo int, partition string, schema Schema, segmentSize int, delimiter rune) {
 	partitionFile := p.fs.openPartitionFile(partition)
 	defer partitionFile.Close()
 
 	processRecords := func(wg *sync.WaitGroup, records [][]string) {
 		defer wg.Done()
-		p.transformer.Transform(records) // Layer 3
+		p.transformer.Transform(batchNo, records) // Layer 3
 	}
 
 	var records [][]string
