@@ -30,7 +30,7 @@ func processPartitions(totalPartitions int, partitions chan string, batchSize in
 		end := min(totalPartitions, i+batchSize) // Last batch can be less than batchSize
 		batchItemCount := end - i
 
-		internal.MeasureExecTime(fmt.Sprintf("processed batch %d with %d partition(s)", batchNo, batchItemCount), func() {
+		internal.MeasureExecTime(fmt.Sprintf("Processed batch %d with %d partition(s)", batchNo, batchItemCount), func() {
 			for j := i; j < end; j += 1 {
 				partition := <-partitions
 

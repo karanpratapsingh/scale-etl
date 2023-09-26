@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -39,7 +40,7 @@ func (f FS) PartitionFile(partitionSize int, batchSize int) (int, int, chan stri
 		makeDirectory(f.partitionPath)
 
 		MeasureExecTime("partitioning complete", func() {
-			fmt.Printf("partitioning %s into partitions of size %d\n", f.filename, partitionSize)
+			fmt.Printf("Partitioning %s \n", f.filename)
 
 			cmd := exec.Command(
 				"split", "-l",
@@ -52,7 +53,7 @@ func (f FS) PartitionFile(partitionSize int, batchSize int) (int, int, chan stri
 			}
 		})
 	} else {
-		fmt.Println("partitions found")
+		fmt.Println("Found partitions")
 	}
 
 	partitionsPaths := f.getPartitions()
@@ -63,7 +64,7 @@ func (f FS) PartitionFile(partitionSize int, batchSize int) (int, int, chan stri
 		panic(fmt.Sprintf("batch size (%d) should be less than total partitions (%d)", batchSize, totalPartitions))
 	}
 
-	fmt.Printf("divided %d partitions into %d batches of size %d each\n", totalPartitions, totalBatches, batchSize)
+	printPartitionInfo(totalPartitions, partitionSize, totalBatches, batchSize)
 
 	var partitions = make(chan string)
 	go func() {
@@ -121,6 +122,34 @@ func (f FS) writeFile(path string, extension string, data []byte) {
 	}
 }
 
+// TODO: this crashes for smaller files
+func countFileRows(path string) int {
+	cmd := exec.Command("wc", "-l", path)
+
+	output, err := cmd.Output()
+	if err != nil {
+		panic(err)
+	}
+
+	parts := strings.Split(string(output), " ")
+
+	lineCount, err := strconv.Atoi(parts[1])
+	if err != nil {
+		panic(err)
+	}
+
+	return lineCount
+}
+
+func getFileSize(path string) int64 {
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		panic(err)
+	}
+
+	return fileInfo.Size() / (1024 * 1024) // MB
+}
+
 func makeDirectory(path string) {
 	if err := os.MkdirAll(path, 0777); err != nil {
 		panic(err)
@@ -140,22 +169,3 @@ func pathExists(path string) bool {
 
 	return true
 }
-
-// TODO: use to print info, this crashes for smaller files
-// func countLinesInFile(filePath string) int {
-// 	cmd := exec.Command("wc", "-l", filePath)
-
-// 	output, err := cmd.Output()
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	parts := strings.Split(string(output), " ")
-
-// 	lineCount, err := strconv.Atoi(parts[1])
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	return lineCount
-// }

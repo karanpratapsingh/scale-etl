@@ -6,7 +6,7 @@ type Schema struct {
 	TableName string
 	Key       string
 	Header    mapset.Set[string]
-	Fields    []string
+	Fields    []string // TODO: rename to columns
 	Types     map[string]string
 }
 

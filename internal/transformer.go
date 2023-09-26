@@ -34,7 +34,7 @@ func NewTransformer(fs FS, transformType TransformType, schema Schema, totalBatc
 		panic("invalid transform type")
 	}
 
-	fmt.Println("Transform type", transformType)
+	printSchemaInfo(transformType, schema)
 	return transformer
 }
 

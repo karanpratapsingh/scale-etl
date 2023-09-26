@@ -66,6 +66,6 @@ func NewConfig(path string) Config {
 		}
 	}
 
-	fmt.Println("loaded config from", path)
+	printInputFileInfo(config.FilePath, config.Delimiter)
 	return config
 }
