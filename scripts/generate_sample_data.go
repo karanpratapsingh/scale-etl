@@ -14,18 +14,18 @@ import (
 
 /**
 *	Usage:
-*		go run scripts/generate.go <filename> <size>
+*		go run scripts/generate_sample_data.go <filename> <row_size>
 *	Example:
-*		go run scripts/generate.go test.csv 10000
+*		go run scripts/generate_sample_data.go test.csv 10000
 **/
 
-type Product struct {
+type Product struct { // TODO: Read from schema dynamically?
 	ID      string `faker:"nanoid"`
 	Name    string `faker:"word"`
 	Price   int
 	InStock bool
 }
-// TODO: make it part of "commands" as generate_sample and read from schema?
+
 func main() {
 	start := time.Now()
 
