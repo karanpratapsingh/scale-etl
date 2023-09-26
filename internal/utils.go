@@ -1,6 +1,10 @@
 package internal
 
-import "sync/atomic"
+import (
+	"fmt"
+	"strconv"
+	"sync/atomic"
+)
 
 type Counter struct {
 	val *int32
@@ -20,4 +24,25 @@ func copySlice[T any](input [][]T) [][]T {
 	copy(copiedSlice, input)
 
 	return copiedSlice
+}
+
+func parseValue(fieldValue string, fieldType string) any {
+	switch fieldType {
+	case "string":
+		return fieldValue
+	case "number":
+		val, err := strconv.Atoi(fieldValue)
+		if err != nil {
+			panic(err)
+		}
+		return val
+	case "bool":
+		val, err := strconv.ParseBool(fieldValue)
+		if err != nil {
+			panic(err)
+		}
+		return val
+	default:
+		panic(fmt.Sprintf("field type %s is not supported", fieldType))
+	}
 }
