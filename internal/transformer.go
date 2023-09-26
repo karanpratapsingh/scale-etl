@@ -30,6 +30,8 @@ func NewTransformer(fs FS, transformType TransformType, schema Schema, totalBatc
 		transformer = &DynamoDBTransformer{fs, schema, counter}
 	case TransformTypeParquet:
 		transformer = &ParquetTransformer{fs}
+	case TransformTypeJSON:
+		transformer = &JSONTransformer{fs, schema, counter}
 	default:
 		panic("invalid transform type")
 	}
@@ -47,8 +49,8 @@ type DynamoDBTransformer struct {
 func (dt *DynamoDBTransformer) Transform(batchNo int, records [][]string) {
 	tableName := dt.schema.TableName
 
-	requestItems := make(map[string]map[string][]map[string]map[string]map[string]map[string]any, 1)
-	requestItems["RequestItems"] = make(map[string][]map[string]map[string]map[string]map[string]any, 1)
+	requestItems := make(map[string]map[string][]map[string]map[string]map[string]map[string]any)
+	requestItems["RequestItems"] = make(map[string][]map[string]map[string]map[string]map[string]any)
 	requestItems["RequestItems"][tableName] = make([]map[string]map[string]map[string]map[string]any, 0)
 
 	/**
@@ -66,9 +68,9 @@ func (dt *DynamoDBTransformer) Transform(batchNo int, records [][]string) {
 	*/
 
 	for _, record := range records {
-		putRequest := make(map[string]map[string]map[string]map[string]any, 1)
+		putRequest := make(map[string]map[string]map[string]map[string]any)
 		attributes := make(map[string]map[string]any, len(record))
-		item := make(map[string]map[string]map[string]any, 1)
+		item := make(map[string]map[string]map[string]any)
 
 		for i, columnValue := range record {
 			columnName := dt.schema.Columns[i]
@@ -96,7 +98,7 @@ func (dt *DynamoDBTransformer) Transform(batchNo int, records [][]string) {
 	}
 
 	path := fmt.Sprintf("%d/%d", batchNo, dt.counter.get())
-	// path := fmt.Sprint(dt.counter.get())
+
 	dt.fs.writeFile(path, "json", jsonData)
 }
 
@@ -107,3 +109,42 @@ type ParquetTransformer struct {
 func (ParquetTransformer) Transform(batchNo int, records [][]string) {
 	fmt.Println("parquet: process", len(records), "records for batch", batchNo)
 }
+
+type JSONTransformer struct {
+	fs      FS
+	schema  Schema
+	counter Counter
+}
+
+func (jt JSONTransformer) Transform(batchNo int, records [][]string) {
+	jsonRecords := make([]map[string]any, 0)
+
+	for _, record := range records {
+		jsonRecord := make(map[string]any)
+
+		for i, columnValue := range record {
+			columnName := jt.schema.Columns[i]
+			columnType := jt.schema.Types[columnName]
+
+			jsonRecord[columnName] = parseValue(columnValue, columnType)
+		}
+		jsonRecords = append(jsonRecords, jsonRecord)
+	}
+
+	jsonData, err := json.Marshal(jsonRecords)
+	if err != nil {
+		panic(err)
+	}
+
+	path := fmt.Sprintf("%d/%d", batchNo, jt.counter.get())
+
+	jt.fs.writeFile(path, "json", jsonData)
+}
+
+// type CSVTransformer struct {
+// 	fs FS
+// }
+
+// func (CSVTransformer) Transform(batchNo int, records [][]string) {
+
+// }

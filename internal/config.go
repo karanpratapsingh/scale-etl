@@ -12,6 +12,7 @@ type TransformType string
 const (
 	TransformTypeDynamoDB TransformType = "dynamodb"
 	TransformTypeParquet  TransformType = "parquet"
+	TransformTypeJSON     TransformType = "json"
 )
 
 type Config struct {
