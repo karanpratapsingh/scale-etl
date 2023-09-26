@@ -28,14 +28,8 @@ func copySlice[T any](input [][]T) [][]T {
 
 func parseValue(fieldValue string, fieldType string) any {
 	switch fieldType {
-	case "string":
+	case "string", "number": // DynamoDB auto parses number type from string
 		return fieldValue
-	case "number":
-		val, err := strconv.Atoi(fieldValue)
-		if err != nil {
-			panic(err)
-		}
-		return val
 	case "bool":
 		val, err := strconv.ParseBool(fieldValue)
 		if err != nil {

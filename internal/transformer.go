@@ -10,7 +10,7 @@ type Transformer interface {
 	Transform(records [][]string)
 }
 
-func NewTransformer(fs FS, transformType TransformType, schema Schema, tableName string) Transformer {
+func NewTransformer(fs FS, transformType TransformType, schema Schema) Transformer {
 	var transformer Transformer
 
 	if pathExists(fs.outputPath) { // Delete existing transform directory
@@ -21,9 +21,9 @@ func NewTransformer(fs FS, transformType TransformType, schema Schema, tableName
 
 	counter := NewCounter(0)
 
-	switch transformType {
+	switch transformType { // TODO: add json and csv (header in each file)
 	case TransformTypeDynamoDB:
-		transformer = &DynamoDBTransformer{fs, schema, counter, tableName}
+		transformer = &DynamoDBTransformer{fs, schema, counter}
 	case TransformTypeParquet:
 		transformer = &ParquetTransformer{fs}
 	default:
@@ -35,30 +35,46 @@ func NewTransformer(fs FS, transformType TransformType, schema Schema, tableName
 }
 
 type DynamoDBTransformer struct {
-	fs        FS
-	schema    Schema
-	counter   Counter
-	tableName string
+	fs      FS
+	schema  Schema
+	counter Counter
 }
 
 func (dt *DynamoDBTransformer) Transform(records [][]string) {
+	tableName := dt.schema.TableName
+
 	requestItems := make(map[string]map[string][]map[string]map[string]map[string]map[string]any, 1)
 	requestItems["RequestItems"] = make(map[string][]map[string]map[string]map[string]map[string]any, 1)
-	requestItems["RequestItems"][dt.tableName] = make([]map[string]map[string]map[string]map[string]any, 0)
+	requestItems["RequestItems"][tableName] = make([]map[string]map[string]map[string]map[string]any, 0)
+
+	/**
+	requestItems map represents the following dynamodb JSON structure
+	{
+	    "RequestItems": map
+	        "TableName": array
+	                "PutRequest": map
+	                    "Item": map
+	                        "Key": map
+	                            "S": "FieldName"
+	                        "FieldName": map
+	                            "S": "FieldName"
+	}
+	*/
 
 	for _, record := range records {
 		putRequest := make(map[string]map[string]map[string]map[string]any, 1)
 		attributes := make(map[string]map[string]any, len(record))
 		item := make(map[string]map[string]map[string]any, 1)
 
-		// TODO: define key in config
-		// attributes["Key"] = map[string]string{
-		// 	dynamodbTypes[fieldType]: value,
-		// }
-
 		for i, fieldValue := range record {
 			fieldName := dt.schema.Fields[i]
 			fieldType := dt.schema.Types[fieldName]
+
+			if fieldName == dt.schema.Key {
+				attributes["Key"] = map[string]any{
+					dynamodbTypes[fieldType]: parseValue(fieldValue, fieldType),
+				}
+			}
 
 			attributes[fieldName] = map[string]any{
 				dynamodbTypes[fieldType]: parseValue(fieldValue, fieldType),
@@ -67,7 +83,7 @@ func (dt *DynamoDBTransformer) Transform(records [][]string) {
 
 		item["Item"] = attributes
 		putRequest["PutRequest"] = item
-		requestItems["RequestItems"][dt.tableName] = append(requestItems["RequestItems"][dt.tableName], putRequest)
+		requestItems["RequestItems"][tableName] = append(requestItems["RequestItems"][tableName], putRequest)
 	}
 
 	jsonData, err := json.Marshal(requestItems)
@@ -77,9 +93,9 @@ func (dt *DynamoDBTransformer) Transform(records [][]string) {
 
 	filename := dt.counter.get()
 
-	// TODO: make it a function
 	path := fmt.Sprintf("%s/%d.json", dt.fs.outputPath, filename)
 
+	// TODO: make it a function
 	file, err := os.Create(path)
 	if err != nil {
 		panic(err)
