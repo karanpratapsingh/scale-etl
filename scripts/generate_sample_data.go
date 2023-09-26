@@ -20,7 +20,7 @@ import (
 *		go run scripts/generate_sample_data.go test.csv 10000
 **/
 
-type Product struct { // TODO: Read from schema dynamically?
+type Product struct {
 	ID      string `faker:"nanoid"`
 	Name    string `faker:"word"`
 	Price   int
