@@ -17,6 +17,7 @@ const (
 type Config struct {
 	FilePath      string        `yaml:"file_path"`
 	TransformType TransformType `yaml:"transform_type"`
+	TableName     string        `yaml:"table_name"`
 	BatchSize     int           `yaml:"batch_size,omitempty"`
 	PartitionSize int           `yaml:"partition_size"`
 	SegmentSize   int           `yaml:"segment_size"`
@@ -50,6 +51,10 @@ func NewConfig(path string) Config {
 
 	if len(config.Schema.Fields) == 0 {
 		panic("schema definition is required")
+	}
+
+	if config.TransformType == TransformTypeDynamoDB && config.TableName == "" {
+		panic("table name is required for transform type dynamodb")
 	}
 
 	fmt.Println("loaded config from", path)

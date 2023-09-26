@@ -1,9 +1,10 @@
 file_path: test.csv
 transform_type: dynamodb # enum: dynamodb, parquet, json, csv
+table_name: table
 batch_size: 25 # (optional) default: process 5 partitions at a time
 partition_size: 100000
 segment_size: 10000
-schema:
+schema: # TODO: add key, table
   - name: string
   - dob: string
   - email: string

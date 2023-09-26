@@ -10,7 +10,7 @@ type Transformer interface {
 	Transform(records [][]string)
 }
 
-func NewTransformer(fs FS, transformType TransformType, schema Schema) Transformer {
+func NewTransformer(fs FS, transformType TransformType, schema Schema, tableName string) Transformer {
 	var transformer Transformer
 
 	if pathExists(fs.outputPath) { // Delete existing transform directory
@@ -23,7 +23,7 @@ func NewTransformer(fs FS, transformType TransformType, schema Schema) Transform
 
 	switch transformType {
 	case TransformTypeDynamoDB:
-		transformer = &DynamoDBTransformer{fs, schema, counter}
+		transformer = &DynamoDBTransformer{fs, schema, counter, tableName}
 	case TransformTypeParquet:
 		transformer = &ParquetTransformer{fs}
 	default:
@@ -35,16 +35,42 @@ func NewTransformer(fs FS, transformType TransformType, schema Schema) Transform
 }
 
 type DynamoDBTransformer struct {
-	fs      FS
-	schema  Schema
-	counter Counter
+	fs        FS
+	schema    Schema
+	counter   Counter
+	tableName string
 }
 
 func (dt *DynamoDBTransformer) Transform(records [][]string) {
-	// TODO: config: table name is required for dynamodb
-	// TODO: write parser with schema
+	requestItems := make(map[string]map[string][]map[string]map[string]map[string]map[string]string, 1)
+	requestItems["RequestItems"] = make(map[string][]map[string]map[string]map[string]map[string]string, 1)
+	requestItems["RequestItems"][dt.tableName] = make([]map[string]map[string]map[string]map[string]string, 0)
 
-	jsonData, err := json.Marshal(records)
+	for _, record := range records {
+		putRequest := make(map[string]map[string]map[string]map[string]string, 1)
+		attributes := make(map[string]map[string]string, len(record))
+		item := make(map[string]map[string]map[string]string, 1)
+
+		// TODO: define key
+		// attributes["Key"] = map[string]string{
+		// 	dynamodbTypes[fieldType]: value,
+		// }
+
+		for i, value := range record {
+			fieldName := dt.schema.Fields[i]
+			fieldType := dt.schema.Types[fieldName]
+
+			attributes[fieldName] = map[string]string{
+				dynamodbTypes[fieldType]: value,
+			}
+		}
+
+		item["Item"] = attributes
+		putRequest["PutRequest"] = item
+		requestItems["RequestItems"][dt.tableName] = append(requestItems["RequestItems"][dt.tableName], putRequest)
+	}
+
+	jsonData, err := json.Marshal(requestItems)
 	if err != nil {
 		panic(err)
 	}

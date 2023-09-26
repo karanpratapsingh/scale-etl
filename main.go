@@ -11,7 +11,7 @@ var config internal.Config = internal.NewConfig(args.ConfigPath)
 
 func main() {
 	var fs = internal.NewFS(config.FilePath, config.PartitionDir, config.OutputDir)
-	var transformer = internal.NewTransformer(fs, config.TransformType, config.Schema)
+	var transformer = internal.NewTransformer(fs, config.TransformType, config.Schema, config.TableName)
 	var processor = internal.NewProcessor(fs, transformer)
 
 	total, partitions := fs.PartitionFile(config.PartitionSize, config.BatchSize)
@@ -45,8 +45,7 @@ func processPartitions(n int, partitions chan string, batchSize int, processor i
 					)
 				}(&wg, partition)
 			}
+			wg.Wait()
 		})
-
-		wg.Wait()
 	}
 }
