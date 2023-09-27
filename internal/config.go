@@ -7,15 +7,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type TransformType string
-
-const (
-	TransformTypeDynamoDB TransformType = "dynamodb"
-	TransformTypeParquet  TransformType = "parquet"
-	TransformTypeJSON     TransformType = "json"
-	TransformTypeCSV      TransformType = "csv"
-)
-
 type Config struct {
 	FilePath      string        `yaml:"file_path"`
 	TransformType TransformType `yaml:"transform_type"`

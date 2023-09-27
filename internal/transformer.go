@@ -96,7 +96,7 @@ func (dt DynamoDBTransformer) Transform(batchNo int, records [][]string) {
 		panic(err)
 	}
 
-	dt.fs.writeSegmentFile(batchNo, "json", jsonData)
+	dt.fs.writeSegmentFile(batchNo, ExtensionTypeJSON, jsonData)
 }
 
 type ParquetTransformer struct {
@@ -104,6 +104,7 @@ type ParquetTransformer struct {
 }
 
 func (ParquetTransformer) Transform(batchNo int, records [][]string) {
+	// TODO: impl
 	fmt.Println("parquet: process", len(records), "records for batch", batchNo)
 }
 
@@ -132,7 +133,7 @@ func (jt JSONTransformer) Transform(batchNo int, records [][]string) {
 		panic(err)
 	}
 
-	jt.fs.writeSegmentFile(batchNo, "json", jsonData)
+	jt.fs.writeSegmentFile(batchNo, ExtensionTypeJSON, jsonData)
 }
 
 type CSVTransformer struct {
@@ -141,6 +142,6 @@ type CSVTransformer struct {
 }
 
 func (ct CSVTransformer) Transform(batchNo int, records [][]string) {
-	records = append([][]string{ct.schema.Columns}, records...)
-	ct.fs.writeSegmentFile(batchNo, "csv", records)
+	records = append([][]string{ct.schema.Columns}, records...) // Prepend header
+	ct.fs.writeSegmentFile(batchNo, ExtensionTypeCSV, records)
 }
