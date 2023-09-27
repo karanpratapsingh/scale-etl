@@ -42,20 +42,7 @@ func (f FS) PartitionFile(partitionSize int, batchSize int) (int, int, chan stri
 
 		MeasureExecTime("Partitioning complete", func() {
 			fmt.Printf("Partitioning %s in directory %s\n", f.filename, f.partitionPath)
-
-			cmd := exec.Command(
-				"split", "-l",
-				fmt.Sprint(partitionSize), f.filePath,
-				fmt.Sprintf("%s/partition-", f.partitionPath),
-			)
-
-			if err := cmd.Start(); err != nil {
-				panic(err)
-			}
-
-			if err := cmd.Wait(); err != nil {
-				panic(err)
-			}
+			f.createPartitions(partitionSize)
 		})
 	} else {
 		fmt.Println("Found partitions for", f.filename)
@@ -83,12 +70,62 @@ func (f FS) PartitionFile(partitionSize int, batchSize int) (int, int, chan stri
 	return totalPartitions, totalBatches, partitions
 }
 
-func CountBatches(n int, batchSize int) int {
-	return n/batchSize + n%batchSize
+func (f FS) createPartitions(partitionSize int) {
+	file, err := os.Open(f.filePath)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	partitionCount := 1
+	lines := 0
+
+	outputFile := f.createPartitionFile(fmt.Sprint(partitionCount))
+	defer outputFile.Close()
+
+	writer := bufio.NewWriter(outputFile)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		_, err := fmt.Fprintln(writer, line)
+		if err != nil {
+			panic(err)
+		}
+
+		lines++
+		if lines >= partitionSize {
+			// Close current partition
+			writer.Flush()
+			lines = 0
+			partitionCount++
+			outputFile.Close()
+
+			// Start new partition
+			outputFile = f.createPartitionFile(fmt.Sprint(partitionCount))
+			defer outputFile.Close()
+
+			writer = bufio.NewWriter(outputFile)
+		}
+	}
+
+	writer.Flush()
+}
+
+func (f FS) createPartitionFile(partition string) *os.File {
+	partitionPath := fmt.Sprintf("%s/%s", f.partitionPath, partition)
+
+	file, err := os.Create(partitionPath)
+	if err != nil {
+		panic(err)
+	}
+	return file
 }
 
 func (f FS) openPartitionFile(partition string) *os.File {
 	partitionPath := fmt.Sprintf("%s/%s", f.partitionPath, partition)
+
 	file, err := os.Open(partitionPath)
 	if err != nil {
 		panic(err)

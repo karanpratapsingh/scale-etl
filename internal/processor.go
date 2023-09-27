@@ -65,3 +65,7 @@ func (p Processor) ProcessPartition(wg *sync.WaitGroup, batchNo int, partition s
 		}
 	}
 }
+
+func CountBatches(n int, batchSize int) int {
+	return n/batchSize + n%batchSize
+}
