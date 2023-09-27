@@ -23,17 +23,17 @@ func NewTransformer(fs FS, transformType TransformType, schema Schema, totalBatc
 		makeDirectory(fmt.Sprintf("%s/%d", fs.outputPath, i))
 	}
 
-	counter := NewCounter(0)
-
-	switch transformType { // TODO: add json and csv (header in each file)
+	switch transformType {
 	case TransformTypeDynamoDB:
-		transformer = &DynamoDBTransformer{fs, schema, counter}
+		transformer = DynamoDBTransformer{fs, schema}
 	case TransformTypeParquet:
-		transformer = &ParquetTransformer{fs}
+		transformer = ParquetTransformer{fs}
 	case TransformTypeJSON:
-		transformer = &JSONTransformer{fs, schema, counter}
+		transformer = JSONTransformer{fs, schema}
+	case TransformTypeCSV:
+		transformer = CSVTransformer{fs, schema}
 	default:
-		panic("invalid transform type")
+		panic(fmt.Sprintf("transform type %s not supported", transformType))
 	}
 
 	printSchemaInfo(transformType, schema)
@@ -41,12 +41,11 @@ func NewTransformer(fs FS, transformType TransformType, schema Schema, totalBatc
 }
 
 type DynamoDBTransformer struct {
-	fs      FS
-	schema  Schema
-	counter Counter
+	fs     FS
+	schema Schema
 }
 
-func (dt *DynamoDBTransformer) Transform(batchNo int, records [][]string) {
+func (dt DynamoDBTransformer) Transform(batchNo int, records [][]string) {
 	tableName := dt.schema.TableName
 
 	requestItems := make(map[string]map[string][]map[string]map[string]map[string]map[string]any)
@@ -97,9 +96,7 @@ func (dt *DynamoDBTransformer) Transform(batchNo int, records [][]string) {
 		panic(err)
 	}
 
-	path := fmt.Sprintf("%d/%d", batchNo, dt.counter.get())
-
-	dt.fs.writeFile(path, "json", jsonData)
+	dt.fs.writeSegmentFile(batchNo, "json", jsonData)
 }
 
 type ParquetTransformer struct {
@@ -111,9 +108,8 @@ func (ParquetTransformer) Transform(batchNo int, records [][]string) {
 }
 
 type JSONTransformer struct {
-	fs      FS
-	schema  Schema
-	counter Counter
+	fs     FS
+	schema Schema
 }
 
 func (jt JSONTransformer) Transform(batchNo int, records [][]string) {
@@ -136,15 +132,15 @@ func (jt JSONTransformer) Transform(batchNo int, records [][]string) {
 		panic(err)
 	}
 
-	path := fmt.Sprintf("%d/%d", batchNo, jt.counter.get())
-
-	jt.fs.writeFile(path, "json", jsonData)
+	jt.fs.writeSegmentFile(batchNo, "json", jsonData)
 }
 
-// type CSVTransformer struct {
-// 	fs FS
-// }
+type CSVTransformer struct {
+	fs     FS
+	schema Schema
+}
 
-// func (CSVTransformer) Transform(batchNo int, records [][]string) {
-
-// }
+func (ct CSVTransformer) Transform(batchNo int, records [][]string) {
+	records = append([][]string{ct.schema.Columns}, records...)
+	ct.fs.writeSegmentFile(batchNo, "csv", records)
+}

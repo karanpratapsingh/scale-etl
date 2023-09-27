@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"bufio"
+	"encoding/csv"
 	"fmt"
 	"os"
 	"os/exec"
@@ -14,6 +16,7 @@ type FS struct {
 	hashedFilename string
 	partitionPath  string
 	outputPath     string
+	counter        Counter
 }
 
 func NewFS(filePath string, partitionDir string, outputDir string) FS {
@@ -21,6 +24,7 @@ func NewFS(filePath string, partitionDir string, outputDir string) FS {
 	hashedFilename := generateHash(filename)
 	partitionPath := fmt.Sprintf("%s/%s", partitionDir, hashedFilename)
 	outputPath := fmt.Sprintf("%s/%s", outputDir, hashedFilename)
+	counter := NewCounter(0)
 
 	return FS{
 		filePath,
@@ -28,6 +32,7 @@ func NewFS(filePath string, partitionDir string, outputDir string) FS {
 		hashedFilename,
 		partitionPath,
 		outputPath,
+		counter,
 	}
 }
 
@@ -108,8 +113,9 @@ func (f FS) getPartitions() []string {
 	return filenames
 }
 
-func (f FS) writeFile(path string, extension string, data []byte) {
-	filePath := fmt.Sprintf("%s/%s.%s", f.outputPath, path, extension)
+func (f FS) writeSegmentFile(batchNo int, extension ExtensionType, data any) {
+	filename := f.counter.get()
+	filePath := fmt.Sprintf("%s/%d/%d.%s", f.outputPath, batchNo, filename, extension)
 
 	file, err := os.Create(filePath)
 	if err != nil {
@@ -117,9 +123,23 @@ func (f FS) writeFile(path string, extension string, data []byte) {
 	}
 	defer file.Close()
 
-	if _, err = file.Write(data); err != nil {
-		panic(err)
+	switch extension {
+	case ExtensionTypeJSON:
+		writer := bufio.NewWriter(file)
+		defer writer.Flush()
+
+		if _, err = writer.Write(data.([]byte)); err != nil {
+			panic(err)
+		}
+	case ExtensionTypeCSV:
+		writer := csv.NewWriter(file)
+		defer writer.Flush()
+
+		if err := writer.WriteAll(data.([][]string)); err != nil {
+			panic(err)
+		}
 	}
+
 }
 
 func countFileRows(path string) int {

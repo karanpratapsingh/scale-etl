@@ -13,6 +13,7 @@ const (
 	TransformTypeDynamoDB TransformType = "dynamodb"
 	TransformTypeParquet  TransformType = "parquet"
 	TransformTypeJSON     TransformType = "json"
+	TransformTypeCSV      TransformType = "csv"
 )
 
 type Config struct {
@@ -28,11 +29,6 @@ type Config struct {
 }
 
 func NewConfig(path string) Config {
-	file, err := os.ReadFile(path)
-	if err != nil {
-		panic(fmt.Sprintf("error reading yaml file: %v\n", err))
-	}
-
 	var config Config
 
 	// Set defaults
@@ -40,6 +36,11 @@ func NewConfig(path string) Config {
 	config.BatchSize = 5
 	config.PartitionDir = "partitions"
 	config.OutputDir = "output"
+
+	file, err := os.ReadFile(path)
+	if err != nil {
+		panic(fmt.Sprintf("error reading config file: %v\n", err))
+	}
 
 	if err = yaml.Unmarshal(file, &config); err != nil {
 		panic(fmt.Errorf("error unmarshalling yaml: %v", err))
