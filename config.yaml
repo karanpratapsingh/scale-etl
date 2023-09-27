@@ -1,5 +1,5 @@
 file_path: samples/sample_10m.csv
-transform_type: dynamodb # enum: dynamodb, parquet, json, csv
+transform_type: csv # enum: dynamodb, parquet, json, csv
 batch_size: 10 # (optional) default: process 5 partitions at a time
 partition_size: 100000
 segment_size: 10000

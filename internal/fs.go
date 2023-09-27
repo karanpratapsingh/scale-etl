@@ -41,7 +41,7 @@ func (f FS) PartitionFile(partitionSize int, batchSize int) (int, int, chan stri
 		makeDirectory(f.partitionPath)
 
 		MeasureExecTime("Partitioning complete", func() {
-			fmt.Printf("Partitioning %s at %s\n", f.filename, f.partitionPath)
+			fmt.Printf("Partitioning %s in directory %s\n", f.filename, f.partitionPath)
 
 			cmd := exec.Command(
 				"split", "-l",
