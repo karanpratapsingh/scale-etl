@@ -1,5 +1,8 @@
-run:
-	go run main.go
+partition:
+	go run main.go partition
+
+transform:
+	go run main.go transform
 
 clean:
 	rm -rf partitions output

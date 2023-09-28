@@ -3,7 +3,9 @@ package main
 import (
 	"csv-ingest/internal"
 	"fmt"
-	"sync"
+	"os"
+
+	"github.com/urfave/cli/v2"
 )
 
 func main() {
@@ -13,36 +15,36 @@ func main() {
 	var config internal.Config = internal.NewConfig(args.ConfigPath)
 
 	var fs = internal.NewFS(config.FilePath, config.PartitionDir, config.OutputDir)
-	totalPartitions, totalBatches, partitions := fs.PartitionFile(config.PartitionSize, config.BatchSize)
 
-	var transformer = internal.NewTransformer(fs, config.TransformType, config.Schema, totalBatches)
-	var processor = internal.NewProcessor(fs, transformer, config.Schema, config.SegmentSize, config.Delimiter)
+	app := &cli.App{
+		Name:  "csv-etl",
+		Usage: "csv etl",
+		Commands: []*cli.Command{
+			{
+				Name:  "partitions",
+				Usage: "partition a csv file",
+				Action: func(*cli.Context) error {
+					fs.PartitionFile(config.PartitionSize)
 
-	internal.MeasureExecTime("Processing complete", func() {
-		processPartitions(totalPartitions, partitions, config, processor) // Layer 2
-	})
-}
+					return nil
+				},
+			},
+			{
+				Name:  "transform",
+				Usage: "transform a csv file",
+				Action: func(*cli.Context) error {
+					totalPartitions, totalBatches, partitions := fs.LoadPartitions(config.BatchSize)
+					var processor = internal.NewProcessor(fs, config.Schema, config.BatchSize, config.SegmentSize, config.Delimiter)
+					var transformer = internal.NewTransformer(fs, config.TransformType, config.Schema, totalBatches)
 
-func processPartitions(totalPartitions int, partitions chan string, config internal.Config, processor internal.Processor) {
-	var wg sync.WaitGroup
-	batchSize := config.BatchSize
+					processor.ProcessPartitions(totalPartitions, partitions, transformer.Transform)
+					return nil
+				},
+			},
+		},
+	}
 
-	for i := 0; i < totalPartitions; i += batchSize {
-		batchNo := internal.CountBatches(i, batchSize) + 1
-		end := min(totalPartitions, i+batchSize) // Last batch can be less than batchSize
-
-		internal.MeasureExecTime(fmt.Sprintf("Processed batch %d", batchNo), func() {
-			for j := i; j < end; j += 1 {
-				partition := <-partitions
-
-				wg.Add(1)
-				go func(wg *sync.WaitGroup, partition string) {
-					defer wg.Done()
-
-					processor.ProcessPartition(wg, batchNo, partition)
-				}(&wg, partition)
-			}
-			wg.Wait()
-		})
+	if err := app.Run(os.Args); err != nil {
+		fmt.Println(err)
 	}
 }

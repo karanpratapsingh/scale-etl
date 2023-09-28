@@ -2,6 +2,7 @@ package internal
 
 import (
 	"encoding/csv"
+	"fmt"
 	"io"
 	"sync"
 
@@ -10,24 +11,50 @@ import (
 
 type Processor struct {
 	fs          FS
-	transformer Transformer
+	wg          *sync.WaitGroup
 	schema      Schema
+	batchSize   int
 	segmentSize int
 	delimiter   rune
 }
 
-func NewProcessor(fs FS, transformer Transformer, schema Schema, segmentSize int, delimiter rune) Processor {
+func NewProcessor(fs FS, schema Schema, batchSize int, segmentSize int, delimiter rune) Processor {
 	printSegmentInfo(segmentSize)
-	return Processor{fs, transformer, schema, segmentSize, delimiter}
+
+	var wg sync.WaitGroup
+	return Processor{fs, &wg, schema, batchSize, segmentSize, delimiter}
 }
 
-func (p Processor) ProcessPartition(wg *sync.WaitGroup, batchNo int, partition string) {
+func (p *Processor) ProcessPartitions(totalPartitions int, partitions chan string, processSegment func(int, [][]string)) {
+	MeasureExecTime("Processing complete", func() {
+		batchSize := p.batchSize
+
+		for i := 0; i < totalPartitions; i += batchSize {
+			batchNo := countBatches(i, batchSize) + 1
+			end := min(totalPartitions, i+batchSize) // Last batch can be less than batchSize
+
+			MeasureExecTime(fmt.Sprintf("Processed batch %d", batchNo), func() {
+				for j := i; j < end; j += 1 {
+					partition := <-partitions
+
+					p.wg.Add(1)
+					go p.processBatch(batchNo, partition, processSegment)
+				}
+				p.wg.Wait()
+			})
+		}
+	})
+}
+
+func (p Processor) processBatch(batchNo int, partition string, processSegment func(int, [][]string)) {
+	defer p.wg.Done()
+
 	partitionFile := p.fs.openPartitionFile(partition)
 	defer partitionFile.Close()
 
 	processRecords := func(wg *sync.WaitGroup, records [][]string) {
 		defer wg.Done()
-		p.transformer.Transform(batchNo, records) // Layer 3
+		processSegment(batchNo, records)
 	}
 
 	var records [][]string
@@ -52,8 +79,8 @@ func (p Processor) ProcessPartition(wg *sync.WaitGroup, batchNo int, partition s
 		if err == io.EOF {
 			// Remaining records when window size is less than batch size
 			if len(records) != 0 {
-				wg.Add(1)
-				go processRecords(wg, copySlice(records))
+				p.wg.Add(1)
+				go processRecords(p.wg, copySlice(records))
 			}
 			break
 		} else if err != nil {
@@ -63,13 +90,13 @@ func (p Processor) ProcessPartition(wg *sync.WaitGroup, batchNo int, partition s
 		records = append(records, record)
 
 		if len(records) == p.segmentSize {
-			wg.Add(1)
-			go processRecords(wg, copySlice(records)) // Copy slice for goroutine
-			records = records[:0]                     // Reset batch window
+			p.wg.Add(1)
+			go processRecords(p.wg, copySlice(records)) // Copy slice for goroutine
+			records = records[:0]                       // Reset batch window
 		}
 	}
 }
 
-func CountBatches(n int, batchSize int) int {
+func countBatches(n int, batchSize int) int {
 	return n/batchSize + n%batchSize
 }

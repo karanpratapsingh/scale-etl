@@ -19,8 +19,11 @@ func printInputFileInfo(filePath string, totalRows int, delimiter rune) {
 	fmt.Printf("File: %s, Size: %f MB, Rows: %d, Delimiter: '%s'\n", filePath, inputFileSize, totalRows, string(delimiter))
 }
 
-func printPartitionInfo(totalPartitions, partitionSize, totalBatches, batchSize int) {
+func printPartitionInfo(totalPartitions, partitionSize int) {
 	fmt.Printf("Partitions: %d, Size: %d\n", totalPartitions, partitionSize)
+}
+
+func printBatchInfo(totalBatches, batchSize int) {
 	fmt.Printf("Batches: %d, Size: %d\n", totalBatches, batchSize)
 }
 

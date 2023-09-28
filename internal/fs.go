@@ -36,7 +36,7 @@ func NewFS(filePath string, partitionDir string, outputDir string) FS {
 	}
 }
 
-func (f FS) PartitionFile(partitionSize int, batchSize int) (int, int, chan string) {
+func (f FS) PartitionFile(partitionSize int) {
 	if !pathExists(f.partitionPath) {
 		makeDirectory(f.partitionPath)
 
@@ -48,15 +48,20 @@ func (f FS) PartitionFile(partitionSize int, batchSize int) (int, int, chan stri
 		fmt.Println("Found partitions for", f.filename)
 	}
 
+	totalPartitions := len(f.getPartitions())
+	printPartitionInfo(totalPartitions, partitionSize)
+}
+
+func (f FS) LoadPartitions(batchSize int) (int, int, chan string) {
 	partitionsPaths := f.getPartitions()
 	totalPartitions := len(partitionsPaths)
-	totalBatches := CountBatches(totalPartitions, batchSize)
+	totalBatches := countBatches(totalPartitions, batchSize)
 
 	if batchSize > totalPartitions {
 		panic(fmt.Sprintf("batch size (%d) should be less than total partitions (%d)", batchSize, totalPartitions))
 	}
 
-	printPartitionInfo(totalPartitions, partitionSize, totalBatches, batchSize)
+	printBatchInfo(totalBatches, batchSize)
 
 	var partitions = make(chan string)
 	go func() {
@@ -137,6 +142,7 @@ func (f FS) openPartitionFile(partition string) *os.File {
 func (f FS) getPartitions() []string {
 	file, err := os.Open(f.partitionPath)
 	if err != nil {
+		fmt.Println("Partitions not found, make sure to run the partition command first.")
 		panic(err)
 	}
 	defer file.Close()
