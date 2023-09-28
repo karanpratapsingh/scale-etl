@@ -43,3 +43,7 @@ func printSchemaInfo(transformType TransformType, schema Schema) {
 	fmt.Println(transformInfo)
 	fmt.Println("Columns:", strings.Join(columns, ", "))
 }
+
+func printSegmentInfo(segmentSize int) {
+	fmt.Printf("Segment size: %d\n", segmentSize)
+}

@@ -11,13 +11,17 @@ import (
 type Processor struct {
 	fs          FS
 	transformer Transformer
+	schema      Schema
+	segmentSize int
+	delimiter   rune
 }
 
-func NewProcessor(fs FS, transformer Transformer) Processor {
-	return Processor{fs, transformer}
+func NewProcessor(fs FS, transformer Transformer, schema Schema, segmentSize int, delimiter rune) Processor {
+	printSegmentInfo(segmentSize)
+	return Processor{fs, transformer, schema, segmentSize, delimiter}
 }
 
-func (p Processor) ProcessPartition(wg *sync.WaitGroup, batchNo int, partition string, schema Schema, segmentSize int, delimiter rune) {
+func (p Processor) ProcessPartition(wg *sync.WaitGroup, batchNo int, partition string) {
 	partitionFile := p.fs.openPartitionFile(partition)
 	defer partitionFile.Close()
 
@@ -29,7 +33,7 @@ func (p Processor) ProcessPartition(wg *sync.WaitGroup, batchNo int, partition s
 	var records [][]string
 
 	reader := csv.NewReader(partitionFile)
-	reader.Comma = delimiter
+	reader.Comma = p.delimiter
 
 	record, err := reader.Read()
 	if err != nil {
@@ -38,7 +42,7 @@ func (p Processor) ProcessPartition(wg *sync.WaitGroup, batchNo int, partition s
 
 	// Skip csv header (if present)
 	recordSet := mapset.NewSet(record...)
-	if !recordSet.Equal(schema.Header) {
+	if !recordSet.Equal(p.schema.Header) {
 		records = append(records, record)
 	}
 
@@ -58,7 +62,7 @@ func (p Processor) ProcessPartition(wg *sync.WaitGroup, batchNo int, partition s
 
 		records = append(records, record)
 
-		if len(records) == segmentSize {
+		if len(records) == p.segmentSize {
 			wg.Add(1)
 			go processRecords(wg, copySlice(records)) // Copy slice for goroutine
 			records = records[:0]                     // Reset batch window
