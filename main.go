@@ -33,7 +33,7 @@ func main() {
 				Name:  "transform",
 				Usage: "transform a csv file",
 				Action: func(*cli.Context) error {
-					totalPartitions, totalBatches, partitions := fs.LoadPartitions(config.BatchSize)
+					totalPartitions, totalBatches, partitions := fs.LoadPartitions(config.PartitionSize, config.BatchSize)
 					var processor = internal.NewProcessor(fs, config.Schema, config.BatchSize, config.SegmentSize, config.Delimiter)
 					var transformer = internal.NewTransformer(fs, config.TransformType, config.Schema, totalBatches)
 

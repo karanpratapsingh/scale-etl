@@ -52,7 +52,7 @@ func (f FS) PartitionFile(partitionSize int) {
 	printPartitionInfo(totalPartitions, partitionSize)
 }
 
-func (f FS) LoadPartitions(batchSize int) (int, int, chan string) {
+func (f FS) LoadPartitions(partitionSize int, batchSize int) (int, int, chan string) {
 	partitionsPaths := f.getPartitions()
 	totalPartitions := len(partitionsPaths)
 	totalBatches := countBatches(totalPartitions, batchSize)
@@ -61,6 +61,7 @@ func (f FS) LoadPartitions(batchSize int) (int, int, chan string) {
 		panic(fmt.Sprintf("batch size (%d) should be less than total partitions (%d)", batchSize, totalPartitions))
 	}
 
+	printPartitionInfo(totalPartitions, partitionSize)
 	printBatchInfo(totalBatches, batchSize)
 
 	var partitions = make(chan string)

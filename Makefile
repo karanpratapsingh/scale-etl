@@ -1,5 +1,5 @@
-partition:
-	go run main.go partition
+partitions:
+	go run main.go partitions
 
 transform:
 	go run main.go transform

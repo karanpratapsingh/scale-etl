@@ -19,14 +19,6 @@ func printInputFileInfo(filePath string, totalRows int, delimiter rune) {
 	fmt.Printf("File: %s, Size: %f MB, Rows: %d, Delimiter: '%s'\n", filePath, inputFileSize, totalRows, string(delimiter))
 }
 
-func printPartitionInfo(totalPartitions, partitionSize int) {
-	fmt.Printf("Partitions: %d, Size: %d\n", totalPartitions, partitionSize)
-}
-
-func printBatchInfo(totalBatches, batchSize int) {
-	fmt.Printf("Batches: %d, Size: %d\n", totalBatches, batchSize)
-}
-
 func printSchemaInfo(transformType TransformType, schema Schema) {
 	columns := make([]string, len(schema.Columns))
 
@@ -45,6 +37,14 @@ func printSchemaInfo(transformType TransformType, schema Schema) {
 
 	fmt.Println(transformInfo)
 	fmt.Println("Columns:", strings.Join(columns, ", "))
+}
+
+func printPartitionInfo(totalPartitions, partitionSize int) {
+	fmt.Printf("Partitions: %d, Size: %d\n", totalPartitions, partitionSize)
+}
+
+func printBatchInfo(totalBatches, batchSize int) {
+	fmt.Printf("Batches: %d, Size: %d\n", totalBatches, batchSize)
 }
 
 func printSegmentInfo(segmentSize int) {
