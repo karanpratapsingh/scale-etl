@@ -50,3 +50,7 @@ func printBatchInfo(totalBatches, batchSize int) {
 func printSegmentInfo(segmentSize int) {
 	fmt.Printf("Segment size: %d\n", segmentSize)
 }
+
+func printSearchInfo(pattern, outputPath string) {
+	fmt.Printf("Pattern: %s, Output: %s\n", pattern, outputPath)
+}

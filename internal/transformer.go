@@ -7,7 +7,7 @@ import (
 )
 
 type Transformer interface {
-	Transform(batchNo int, records [][]string)
+	SegmentsProcessor
 }
 
 func NewTransformer(fs FS, transformType TransformType, schema Schema, totalBatches int) Transformer {
@@ -45,7 +45,7 @@ type DynamoDBTransformer struct {
 	schema Schema
 }
 
-func (dt DynamoDBTransformer) Transform(batchNo int, records [][]string) {
+func (dt DynamoDBTransformer) ProcessSegment(batchNo int, records [][]string) {
 	tableName := dt.schema.TableName
 
 	requestItems := make(map[string]map[string][]map[string]map[string]map[string]map[string]any)
@@ -96,14 +96,14 @@ func (dt DynamoDBTransformer) Transform(batchNo int, records [][]string) {
 		panic(err)
 	}
 
-	dt.fs.writeSegmentFile(batchNo, ExtensionTypeJSON, jsonData)
+	dt.fs.writeSegmentFile(batchNo, jsonData, ExtensionTypeJSON)
 }
 
 type ParquetTransformer struct {
 	fs FS
 }
 
-func (ParquetTransformer) Transform(batchNo int, records [][]string) {
+func (ParquetTransformer) ProcessSegment(batchNo int, records [][]string) {
 	// TODO: impl
 	fmt.Println("parquet: process", len(records), "records for batch", batchNo)
 }
@@ -113,7 +113,7 @@ type JSONTransformer struct {
 	schema Schema
 }
 
-func (jt JSONTransformer) Transform(batchNo int, records [][]string) {
+func (jt JSONTransformer) ProcessSegment(batchNo int, records [][]string) {
 	jsonRecords := make([]map[string]any, 0)
 
 	for _, record := range records {
@@ -133,7 +133,7 @@ func (jt JSONTransformer) Transform(batchNo int, records [][]string) {
 		panic(err)
 	}
 
-	jt.fs.writeSegmentFile(batchNo, ExtensionTypeJSON, jsonData)
+	jt.fs.writeSegmentFile(batchNo, jsonData, ExtensionTypeJSON)
 }
 
 type CSVTransformer struct {
@@ -141,7 +141,7 @@ type CSVTransformer struct {
 	schema Schema
 }
 
-func (ct CSVTransformer) Transform(batchNo int, records [][]string) {
+func (ct CSVTransformer) ProcessSegment(batchNo int, records [][]string) {
 	records = append([][]string{ct.schema.Columns}, records...) // Prepend header
-	ct.fs.writeSegmentFile(batchNo, ExtensionTypeCSV, records)
+	ct.fs.writeSegmentFile(batchNo, records, ExtensionTypeCSV)
 }
