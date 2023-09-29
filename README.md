@@ -16,7 +16,14 @@
 - Commands
   - Partition
   - Transform: dynamodb | parquet | json | csv
-  - Load: dynamodb?
+  - Load: call command from config for each batch (how many files concurrent?)
+  - Search: regexp?
 
 **Future scope**
- - In memory partitions
+ - Write logs to file
+ - Remove a column
+ - Add a derived column
+
+**Challenges**
+- In memory partitions?
+- Line widths to seek in file for streaming!
