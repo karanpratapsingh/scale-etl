@@ -4,6 +4,9 @@ partitions:
 transform:
 	go run main.go transform
 
+search:
+	go run main.go search
+
 clean:
 	rm -rf partitions output
 
