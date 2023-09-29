@@ -52,7 +52,7 @@ func (f FS) PartitionFile(partitionSize int) {
 	printPartitionInfo(totalPartitions, partitionSize)
 }
 
-func (f FS) LoadPartitions(partitionSize int, batchSize int) (int, int, chan string) {
+func (f FS) LoadPartitions(partitionSize int, batchSize int) (chan string, int, int) {
 	partitionsPaths := f.getPartitions()
 	totalPartitions := len(partitionsPaths)
 	totalBatches := countBatches(totalPartitions, batchSize)
@@ -73,7 +73,7 @@ func (f FS) LoadPartitions(partitionSize int, batchSize int) (int, int, chan str
 		close(partitions)
 	}()
 
-	return totalPartitions, totalBatches, partitions
+	return partitions, totalPartitions, totalBatches
 }
 
 func (f FS) createPartitions(partitionSize int) {
@@ -157,7 +157,7 @@ func (f FS) getPartitions() []string {
 	return filenames
 }
 
-func (f FS) writeSegmentFile(batchNo int, extension ExtensionType, data any) {
+func (f FS) writeSegmentFile(batchNo int, data any, extension ExtensionType) {
 	filename := f.counter.get()
 	filePath := fmt.Sprintf("%s/%d/%d.%s", f.outputPath, batchNo, filename, extension)
 
@@ -214,7 +214,7 @@ func getFileSize(path string) float64 {
 }
 
 func makeDirectory(path string) {
-	if err := os.MkdirAll(path, 0777); err != nil {
+	if err := os.MkdirAll(path, os.FileMode(0777)); err != nil {
 		panic(err)
 	}
 }
