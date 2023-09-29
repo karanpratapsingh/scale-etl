@@ -53,7 +53,7 @@ func (p *Processor) ProcessPartitions(totalPartitions int, partitions chan strin
 func (p Processor) processBatch(batchNo int, partition string, segmentsProcessor SegmentsProcessor) {
 	defer p.wg.Done()
 
-	partitionFile := p.fs.openPartitionFile(partition)
+	partitionFile := p.fs.getPartitionFile(partition)
 	defer partitionFile.Close()
 
 	processRecords := func(wg *sync.WaitGroup, records [][]string) {

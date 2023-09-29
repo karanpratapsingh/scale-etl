@@ -129,7 +129,7 @@ func (f FS) createPartitionFile(partition string) *os.File {
 	return file
 }
 
-func (f FS) openPartitionFile(partition string) *os.File {
+func (f FS) getPartitionFile(partition string) *os.File {
 	partitionPath := fmt.Sprintf("%s/%s", f.partitionPath, partition)
 
 	file, err := os.Open(partitionPath)
@@ -183,7 +183,28 @@ func (f FS) writeSegmentFile(batchNo int, data any, extension ExtensionType) {
 			panic(err)
 		}
 	}
+}
 
+func appendToFile(path string, data chan []string) *os.File {
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	writer := csv.NewWriter(file)
+	// defer writer.Flush() // TODO: flush in batches, why is header skipped?
+
+	go func(writer *csv.Writer) {
+		for row := range data {
+			if err := writer.Write(row); err != nil {
+				panic(err)
+			}
+		}
+
+		writer.Flush()
+	}(writer)
+
+	return file
 }
 
 func countFileRows(path string) int {
