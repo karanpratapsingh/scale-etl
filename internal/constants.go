@@ -1,5 +1,7 @@
 package internal
 
+type Row = []string
+
 type TransformType string
 
 const (

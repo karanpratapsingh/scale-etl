@@ -24,9 +24,7 @@ func main() {
 				Name:  "partitions",
 				Usage: "partition a csv file",
 				Action: func(*cli.Context) error {
-					fs.PartitionFile(config.PartitionSize)
-
-					return nil
+					return fs.PartitionFile(config.PartitionSize)
 				},
 			},
 			{
@@ -67,8 +65,14 @@ func main() {
 					var searcher = internal.NewSearcher(fs, config.Schema, pattern, outputPath)
 
 					processor.ProcessPartitions(totalPartitions, partitions, searcher)
-					searcher.Cleanup()
-					return nil
+					return searcher.Cleanup()
+				},
+			},
+			{
+				Name:  "clean",
+				Usage: "clean partitions directory",
+				Action: func(*cli.Context) error {
+					return fs.CleanPartitions()
 				},
 			},
 		},

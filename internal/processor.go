@@ -24,7 +24,7 @@ type BatchProcessor interface {
 }
 
 type SegmentProcessor interface {
-	ProcessSegment(batchNo int, records [][]string) // TODO: rename to rows
+	ProcessSegment(batchNo int, rows []Row)
 }
 
 func NewProcessor(fs FS, schema Schema, batchSize int, segmentSize int, delimiter rune) Processor {
@@ -62,47 +62,47 @@ func (p Processor) processPartition(batchNo int, partition string, batchProcesso
 	partitionFile := p.fs.getPartitionFile(partition)
 	defer partitionFile.Close()
 
-	processRows := func(wg *sync.WaitGroup, records [][]string) {
+	processRows := func(wg *sync.WaitGroup, rows []Row) {
 		defer wg.Done()
-		batchProcessor.ProcessSegment(batchNo, records)
+		batchProcessor.ProcessSegment(batchNo, rows)
 	}
 
-	var records [][]string
+	var rows []Row
 
 	reader := csv.NewReader(partitionFile)
 	reader.Comma = p.delimiter
 
-	record, err := reader.Read()
+	row, err := reader.Read()
 	if err != nil {
 		panic(err)
 	}
 
 	// Skip csv header (if present)
-	recordSet := mapset.NewSet(record...)
-	if !recordSet.Equal(p.schema.Header) {
-		records = append(records, record)
+	rowSet := mapset.NewSet(row...)
+	if !rowSet.Equal(p.schema.Header) {
+		rows = append(rows, row)
 	}
 
 	for {
-		record, err := reader.Read()
+		row, err := reader.Read()
 
 		if err == io.EOF {
-			// Remaining records when window size is less than batch size
-			if len(records) != 0 {
+			// Remaining rows when window size is less than batch size
+			if len(rows) != 0 {
 				p.wg.Add(1)
-				go processRows(p.wg, copySlice(records))
+				go processRows(p.wg, copySlice(rows))
 			}
 			break
 		} else if err != nil {
 			panic(err)
 		}
 
-		records = append(records, record)
+		rows = append(rows, row)
 
-		if len(records) == p.segmentSize {
+		if len(rows) == p.segmentSize {
 			p.wg.Add(1)
-			go processRows(p.wg, copySlice(records)) // Copy slice for goroutine
-			records = records[:0]                    // Reset batch window
+			go processRows(p.wg, copySlice(rows)) // Copy slice for goroutine
+			rows = rows[:0]                       // Reset batch window
 		}
 	}
 }

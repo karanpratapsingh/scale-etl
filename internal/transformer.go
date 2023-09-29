@@ -47,7 +47,7 @@ type DynamoDBTransformer struct {
 
 func (cs DynamoDBTransformer) BatchComplete(int) {}
 
-func (dt DynamoDBTransformer) ProcessSegment(batchNo int, records [][]string) {
+func (dt DynamoDBTransformer) ProcessSegment(batchNo int, rows []Row) {
 	tableName := dt.schema.TableName
 
 	requestItems := make(map[string]map[string][]map[string]map[string]map[string]map[string]any)
@@ -68,12 +68,12 @@ func (dt DynamoDBTransformer) ProcessSegment(batchNo int, records [][]string) {
 	}
 	*/
 
-	for _, record := range records {
+	for _, row := range rows {
 		putRequest := make(map[string]map[string]map[string]map[string]any)
-		attributes := make(map[string]map[string]any, len(record))
+		attributes := make(map[string]map[string]any)
 		item := make(map[string]map[string]map[string]any)
 
-		for i, columnValue := range record {
+		for i, columnValue := range row {
 			columnName := dt.schema.Columns[i]
 			columnType := dt.schema.Types[columnName]
 
@@ -107,9 +107,9 @@ type ParquetTransformer struct {
 
 func (cs ParquetTransformer) BatchComplete(int) {}
 
-func (ParquetTransformer) ProcessSegment(batchNo int, records [][]string) {
+func (ParquetTransformer) ProcessSegment(batchNo int, row []Row) {
 	// TODO: impl
-	fmt.Println("parquet: process", len(records), "records for batch", batchNo)
+	fmt.Println("parquet: process", len(row), "row for batch", batchNo)
 }
 
 type JSONTransformer struct {
@@ -119,22 +119,22 @@ type JSONTransformer struct {
 
 func (cs JSONTransformer) BatchComplete(int) {}
 
-func (jt JSONTransformer) ProcessSegment(batchNo int, records [][]string) {
-	jsonRecords := make([]map[string]any, 0)
+func (jt JSONTransformer) ProcessSegment(batchNo int, row []Row) {
+	jsonRows := make([]map[string]any, 0)
 
-	for _, record := range records {
-		jsonRecord := make(map[string]any)
+	for _, row := range row {
+		jsonRow := make(map[string]any)
 
-		for i, columnValue := range record {
+		for i, columnValue := range row {
 			columnName := jt.schema.Columns[i]
 			columnType := jt.schema.Types[columnName]
 
-			jsonRecord[columnName] = parseValue(columnValue, columnType)
+			jsonRow[columnName] = parseValue(columnValue, columnType)
 		}
-		jsonRecords = append(jsonRecords, jsonRecord)
+		jsonRows = append(jsonRows, jsonRow)
 	}
 
-	jsonData, err := json.Marshal(jsonRecords)
+	jsonData, err := json.Marshal(jsonRows)
 	if err != nil {
 		panic(err)
 	}
@@ -149,7 +149,7 @@ type CSVTransformer struct {
 
 func (cs CSVTransformer) BatchComplete(int) {}
 
-func (ct CSVTransformer) ProcessSegment(batchNo int, records [][]string) {
-	records = append([][]string{ct.schema.Columns}, records...) // Prepend header
-	ct.fs.writeSegmentFile(batchNo, records, ExtensionTypeCSV)
+func (ct CSVTransformer) ProcessSegment(batchNo int, rows []Row) {
+	rows = append([]Row{ct.schema.Columns}, rows...) // Prepend header
+	ct.fs.writeSegmentFile(batchNo, rows, ExtensionTypeCSV)
 }

@@ -36,13 +36,13 @@ func NewFS(filePath string, partitionDir string, outputDir string) FS {
 	}
 }
 
-func (f FS) PartitionFile(partitionSize int) {
+func (f FS) PartitionFile(partitionSize int) (err error) {
 	if !pathExists(f.partitionPath) {
 		makeDirectory(f.partitionPath)
 
 		MeasureExecTime("Partitioning complete", func() {
 			fmt.Printf("Partitioning %s in directory %s\n", f.filename, f.partitionPath)
-			f.createPartitions(partitionSize)
+			err = f.createPartitions(partitionSize)
 		})
 	} else {
 		fmt.Println("Found partitions for", f.filename)
@@ -50,6 +50,8 @@ func (f FS) PartitionFile(partitionSize int) {
 
 	totalPartitions := len(f.getPartitions())
 	printPartitionInfo(totalPartitions, partitionSize)
+
+	return err
 }
 
 func (f FS) LoadPartitions(partitionSize int, batchSize int) (chan string, int, int) {
@@ -76,10 +78,18 @@ func (f FS) LoadPartitions(partitionSize int, batchSize int) (chan string, int, 
 	return partitions, totalPartitions, totalBatches
 }
 
-func (f FS) createPartitions(partitionSize int) {
+func (f FS) CleanPartitions() error {
+	err := os.RemoveAll(f.partitionPath)
+	if err == nil {
+		fmt.Println("Cleaned partitions directory:", f.partitionPath)
+	}
+	return err
+}
+
+func (f FS) createPartitions(partitionSize int) error {
 	file, err := os.Open(f.filePath)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer file.Close()
 
@@ -116,7 +126,7 @@ func (f FS) createPartitions(partitionSize int) {
 		}
 	}
 
-	writer.Flush()
+	return writer.Flush()
 }
 
 func (f FS) createPartitionFile(partition string) *os.File {
@@ -179,7 +189,7 @@ func (f FS) writeSegmentFile(batchNo int, data any, extension ExtensionType) {
 		writer := csv.NewWriter(file)
 		defer writer.Flush()
 
-		if err := writer.WriteAll(data.([][]string)); err != nil {
+		if err := writer.WriteAll(data.([]Row)); err != nil {
 			panic(err)
 		}
 	}

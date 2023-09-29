@@ -50,8 +50,8 @@ func (cs ColumnSearcher) BatchComplete(int) {
 	cs.mu.Unlock()
 }
 
-func (cs ColumnSearcher) ProcessSegment(batchNo int, records [][]string) {
-	for _, row := range records {
+func (cs ColumnSearcher) ProcessSegment(batchNo int, rows []Row) {
+	for _, row := range rows {
 		for _, col := range row {
 			if strings.Contains(col, cs.pattern) {
 				cs.appendRow(row)
@@ -61,12 +61,12 @@ func (cs ColumnSearcher) ProcessSegment(batchNo int, records [][]string) {
 
 }
 
-func (cs ColumnSearcher) Cleanup() {
+func (cs ColumnSearcher) Cleanup() error {
 	cs.mu.Lock()
 	cs.writer.Flush()
 	cs.mu.Unlock()
 
-	cs.outputFile.Close()
+	return cs.outputFile.Close()
 }
 
 func (cs *ColumnSearcher) appendRow(row []string) {
