@@ -44,11 +44,9 @@ func NewSearcher(fs FS, schema Schema, pattern string, outputPath string) Column
 	return cs
 }
 
-func (cs *ColumnSearcher) appendRow(row []string) {
+func (cs ColumnSearcher) BatchComplete(int) {
 	cs.mu.Lock()
-	if err := cs.writer.Write(row); err != nil {
-		panic(err)
-	}
+	cs.writer.Flush()
 	cs.mu.Unlock()
 }
 
@@ -60,9 +58,21 @@ func (cs ColumnSearcher) ProcessSegment(batchNo int, records [][]string) {
 			}
 		}
 	}
+
 }
 
 func (cs ColumnSearcher) Cleanup() {
+	cs.mu.Lock()
 	cs.writer.Flush()
+	cs.mu.Unlock()
+
 	cs.outputFile.Close()
+}
+
+func (cs *ColumnSearcher) appendRow(row []string) {
+	cs.mu.Lock()
+	if err := cs.writer.Write(row); err != nil {
+		panic(err)
+	}
+	cs.mu.Unlock()
 }

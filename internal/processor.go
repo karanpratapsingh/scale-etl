@@ -18,6 +18,11 @@ type Processor struct {
 	delimiter   rune
 }
 
+type BatchProcessor interface {
+	SegmentProcessor
+	BatchComplete(batchNo int)
+}
+
 type SegmentProcessor interface {
 	ProcessSegment(batchNo int, records [][]string) // TODO: rename to rows
 }
@@ -29,7 +34,7 @@ func NewProcessor(fs FS, schema Schema, batchSize int, segmentSize int, delimite
 	return Processor{fs, &wg, schema, batchSize, segmentSize, delimiter}
 }
 
-func (p *Processor) ProcessPartitions(totalPartitions int, partitions chan string, segmentProcessor SegmentProcessor) {
+func (p *Processor) ProcessPartitions(totalPartitions int, partitions chan string, batchProcessor BatchProcessor) {
 	MeasureExecTime("Processing complete", func() {
 		batchSize := p.batchSize
 
@@ -42,16 +47,16 @@ func (p *Processor) ProcessPartitions(totalPartitions int, partitions chan strin
 					partition := <-partitions
 
 					p.wg.Add(1)
-					go p.processPartition(batchNo, partition, segmentProcessor)
+					go p.processPartition(batchNo, partition, batchProcessor)
 				}
 				p.wg.Wait()
-
+				batchProcessor.BatchComplete(batchNo)
 			})
 		}
 	})
 }
 
-func (p Processor) processPartition(batchNo int, partition string, segmentProcessor SegmentProcessor) {
+func (p Processor) processPartition(batchNo int, partition string, batchProcessor BatchProcessor) {
 	defer p.wg.Done()
 
 	partitionFile := p.fs.getPartitionFile(partition)
@@ -59,7 +64,7 @@ func (p Processor) processPartition(batchNo int, partition string, segmentProces
 
 	processRows := func(wg *sync.WaitGroup, records [][]string) {
 		defer wg.Done()
-		segmentProcessor.ProcessSegment(batchNo, records)
+		batchProcessor.ProcessSegment(batchNo, records)
 	}
 
 	var records [][]string

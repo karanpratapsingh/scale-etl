@@ -7,7 +7,7 @@ import (
 )
 
 type Transformer interface {
-	SegmentProcessor
+	BatchProcessor
 }
 
 func NewTransformer(fs FS, transformType TransformType, schema Schema, totalBatches int) Transformer {
@@ -44,6 +44,8 @@ type DynamoDBTransformer struct {
 	fs     FS
 	schema Schema
 }
+
+func (cs DynamoDBTransformer) BatchComplete(int) {}
 
 func (dt DynamoDBTransformer) ProcessSegment(batchNo int, records [][]string) {
 	tableName := dt.schema.TableName
@@ -103,6 +105,8 @@ type ParquetTransformer struct {
 	fs FS
 }
 
+func (cs ParquetTransformer) BatchComplete(int) {}
+
 func (ParquetTransformer) ProcessSegment(batchNo int, records [][]string) {
 	// TODO: impl
 	fmt.Println("parquet: process", len(records), "records for batch", batchNo)
@@ -112,6 +116,8 @@ type JSONTransformer struct {
 	fs     FS
 	schema Schema
 }
+
+func (cs JSONTransformer) BatchComplete(int) {}
 
 func (jt JSONTransformer) ProcessSegment(batchNo int, records [][]string) {
 	jsonRecords := make([]map[string]any, 0)
@@ -140,6 +146,8 @@ type CSVTransformer struct {
 	fs     FS
 	schema Schema
 }
+
+func (cs CSVTransformer) BatchComplete(int) {}
 
 func (ct CSVTransformer) ProcessSegment(batchNo int, records [][]string) {
 	records = append([][]string{ct.schema.Columns}, records...) // Prepend header
