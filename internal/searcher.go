@@ -53,7 +53,7 @@ func (cs ColumnSearcher) BatchComplete(int) {
 func (cs ColumnSearcher) ProcessSegment(batchNo int, rows []Row) {
 	for _, row := range rows {
 		for _, col := range row {
-			if strings.Contains(col, cs.pattern) {
+			if strings.Contains(col, cs.pattern) { // TODO: implement pattern matching
 				cs.appendRow(row)
 			}
 		}
