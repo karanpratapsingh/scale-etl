@@ -7,7 +7,7 @@ import (
 )
 
 type Transformer interface {
-	SegmentsProcessor
+	SegmentProcessor
 }
 
 func NewTransformer(fs FS, transformType TransformType, schema Schema, totalBatches int) Transformer {

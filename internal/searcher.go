@@ -1,22 +1,27 @@
 package internal
 
 import (
+	"encoding/csv"
 	"os"
 	"strings"
+	"sync"
 )
 
 type Searcher interface {
 	Cleaner
-	SegmentsProcessor
+	SegmentProcessor
 }
 
 type ColumnSearcher struct {
+	wg         *sync.WaitGroup
 	pattern    string
 	outputFile *os.File
-	matches    chan []string
+	writer     *csv.Writer
+	// matches    chan []string
+	mu *sync.Mutex
 }
 
-func NewSearcher(schema Schema, pattern string, outputPath string) Searcher {
+func NewSearcher(schema Schema, pattern string, outputPath string) ColumnSearcher {
 	if pattern == "" {
 		panic("pattern string should not be empty")
 	}
@@ -26,26 +31,44 @@ func NewSearcher(schema Schema, pattern string, outputPath string) Searcher {
 		os.RemoveAll(outputPath)
 	}
 
-	matches := make(chan []string)
+	file, err := os.OpenFile(outputPath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+	if err != nil {
+		panic(err)
+	}
 
-	file := appendToFile(outputPath, matches)
-	matches <- schema.Columns // Append header
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	writer := csv.NewWriter(file)
 
 	printSearchInfo(pattern, outputPath)
-	return ColumnSearcher{pattern, file, matches}
+
+	cs := ColumnSearcher{&wg, pattern, file, writer, &mu}
+	cs.appendRow(schema.Columns) // Append header
+
+	return cs
+}
+
+func (cs *ColumnSearcher) appendRow(row []string) {
+	cs.mu.Lock()
+	if err := cs.writer.Write(row); err != nil {
+		panic(err)
+	}
+	cs.mu.Unlock()
 }
 
 func (cs ColumnSearcher) ProcessSegment(batchNo int, records [][]string) {
 	for _, row := range records {
 		for _, col := range row {
 			if strings.Contains(col, cs.pattern) {
-				cs.matches <- row
+				cs.appendRow(row)
 			}
 		}
 	}
 }
 
 func (cs ColumnSearcher) Cleanup() {
-	close(cs.matches)
+	// cs.wg.Wait()
+	// close(cs.matches)
+	cs.writer.Flush()
 	cs.outputFile.Close()
 }

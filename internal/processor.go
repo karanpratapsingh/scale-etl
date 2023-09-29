@@ -18,7 +18,7 @@ type Processor struct {
 	delimiter   rune
 }
 
-type SegmentsProcessor interface {
+type SegmentProcessor interface {
 	ProcessSegment(batchNo int, records [][]string) // TODO: rename to rows
 }
 
@@ -29,7 +29,7 @@ func NewProcessor(fs FS, schema Schema, batchSize int, segmentSize int, delimite
 	return Processor{fs, &wg, schema, batchSize, segmentSize, delimiter}
 }
 
-func (p *Processor) ProcessPartitions(totalPartitions int, partitions chan string, segmentsProcessor SegmentsProcessor) {
+func (p *Processor) ProcessPartitions(totalPartitions int, partitions chan string, segmentProcessor SegmentProcessor) {
 	MeasureExecTime("Processing complete", func() {
 		batchSize := p.batchSize
 
@@ -42,23 +42,24 @@ func (p *Processor) ProcessPartitions(totalPartitions int, partitions chan strin
 					partition := <-partitions
 
 					p.wg.Add(1)
-					go p.processBatch(batchNo, partition, segmentsProcessor)
+					go p.processPartition(batchNo, partition, segmentProcessor)
 				}
 				p.wg.Wait()
+
 			})
 		}
 	})
 }
 
-func (p Processor) processBatch(batchNo int, partition string, segmentsProcessor SegmentsProcessor) {
+func (p Processor) processPartition(batchNo int, partition string, segmentProcessor SegmentProcessor) {
 	defer p.wg.Done()
 
 	partitionFile := p.fs.getPartitionFile(partition)
 	defer partitionFile.Close()
 
-	processRecords := func(wg *sync.WaitGroup, records [][]string) {
+	processRows := func(wg *sync.WaitGroup, records [][]string) {
 		defer wg.Done()
-		segmentsProcessor.ProcessSegment(batchNo, records)
+		segmentProcessor.ProcessSegment(batchNo, records)
 	}
 
 	var records [][]string
@@ -84,7 +85,7 @@ func (p Processor) processBatch(batchNo int, partition string, segmentsProcessor
 			// Remaining records when window size is less than batch size
 			if len(records) != 0 {
 				p.wg.Add(1)
-				go processRecords(p.wg, copySlice(records))
+				go processRows(p.wg, copySlice(records))
 			}
 			break
 		} else if err != nil {
@@ -95,8 +96,8 @@ func (p Processor) processBatch(batchNo int, partition string, segmentsProcessor
 
 		if len(records) == p.segmentSize {
 			p.wg.Add(1)
-			go processRecords(p.wg, copySlice(records)) // Copy slice for goroutine
-			records = records[:0]                       // Reset batch window
+			go processRows(p.wg, copySlice(records)) // Copy slice for goroutine
+			records = records[:0]                    // Reset batch window
 		}
 	}
 }
