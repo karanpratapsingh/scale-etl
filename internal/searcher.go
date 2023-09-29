@@ -17,11 +17,10 @@ type ColumnSearcher struct {
 	pattern    string
 	outputFile *os.File
 	writer     *csv.Writer
-	// matches    chan []string
-	mu *sync.Mutex
+	mu         *sync.Mutex
 }
 
-func NewSearcher(schema Schema, pattern string, outputPath string) ColumnSearcher {
+func NewSearcher(fs FS, schema Schema, pattern string, outputPath string) ColumnSearcher {
 	if pattern == "" {
 		panic("pattern string should not be empty")
 	}
@@ -31,13 +30,10 @@ func NewSearcher(schema Schema, pattern string, outputPath string) ColumnSearche
 		os.RemoveAll(outputPath)
 	}
 
-	file, err := os.OpenFile(outputPath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
-	if err != nil {
-		panic(err)
-	}
-
 	var wg sync.WaitGroup
 	var mu sync.Mutex
+
+	file := fs.getSearchResultsFile(outputPath)
 	writer := csv.NewWriter(file)
 
 	printSearchInfo(pattern, outputPath)
@@ -67,8 +63,6 @@ func (cs ColumnSearcher) ProcessSegment(batchNo int, records [][]string) {
 }
 
 func (cs ColumnSearcher) Cleanup() {
-	// cs.wg.Wait()
-	// close(cs.matches)
 	cs.writer.Flush()
 	cs.outputFile.Close()
 }

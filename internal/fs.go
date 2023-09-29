@@ -185,6 +185,14 @@ func (f FS) writeSegmentFile(batchNo int, data any, extension ExtensionType) {
 	}
 }
 
+func (f FS) getSearchResultsFile(path string) *os.File {
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644) // Append only
+	if err != nil {
+		panic(err)
+	}
+	return file
+}
+
 func countFileRows(path string) int {
 	cmd := exec.Command("wc", "-l", path)
 

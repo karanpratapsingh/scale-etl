@@ -11,7 +11,7 @@ import (
 func main() {
 	defer internal.HandlePanic()
 
-	var args internal.Args = internal.ParseArgs()
+	var args internal.Args = internal.ParseArgs() // TODO: move to cli framework
 	var config internal.Config = internal.NewConfig(args.ConfigPath)
 
 	var fs = internal.NewFS(config.FilePath, config.PartitionDir, config.OutputDir)
@@ -48,12 +48,14 @@ func main() {
 					&cli.StringFlag{
 						Name:     "pattern",
 						Required: true,
+						Aliases:  []string{"p"},
 						Usage:    "Search pattern",
 					},
 					&cli.StringFlag{
-						Name:  "output",
-						Value: "matches.csv",
-						Usage: "Output file path",
+						Name:    "output",
+						Value:   "matches.csv",
+						Aliases: []string{"o"},
+						Usage:   "Output file path",
 					},
 				},
 				Action: func(c *cli.Context) error {
@@ -62,7 +64,7 @@ func main() {
 
 					partitions, totalPartitions, _ := fs.LoadPartitions(config.PartitionSize, config.BatchSize)
 					var processor = internal.NewProcessor(fs, config.Schema, config.BatchSize, config.SegmentSize, config.Delimiter)
-					var searcher = internal.NewSearcher(config.Schema, pattern, outputPath)
+					var searcher = internal.NewSearcher(fs, config.Schema, pattern, outputPath)
 
 					processor.ProcessPartitions(totalPartitions, partitions, searcher)
 					searcher.Cleanup()
