@@ -62,7 +62,7 @@ func main() {
 
 					partitions, totalPartitions, _ := fs.LoadPartitions(config.PartitionSize, config.BatchSize)
 					var processor = internal.NewProcessor(fs, config.Schema, config.BatchSize, config.SegmentSize, config.Delimiter)
-					var searcher = internal.NewSearcher(fs, config.Schema, pattern, outputPath)
+					var searcher = internal.NewSearcher(config.Schema, pattern, outputPath)
 
 					processor.ProcessPartitions(totalPartitions, partitions, searcher)
 					searcher.Cleanup()
