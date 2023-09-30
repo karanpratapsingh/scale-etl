@@ -8,7 +8,7 @@ search:
 	go run main.go search
 
 clean:
-	rm -rf partitions output
+	go run main.go clean
 
 generate_sample_data:
 	go run scripts/generate_sample_data.go samples/sample_1k.csv 1000
