@@ -20,8 +20,8 @@ type ColumnSearcher struct {
 	mu         *sync.Mutex
 }
 
-func NewSearcher(fs FS, schema Schema, pattern string, outputPath string) ColumnSearcher {
-	if pattern == "" {
+func NewSearcher(schema Schema, pattern string, outputPath string) ColumnSearcher {
+	if pattern == "" { // TODO: move to errors
 		panic("pattern string should not be empty")
 	}
 
@@ -33,7 +33,7 @@ func NewSearcher(fs FS, schema Schema, pattern string, outputPath string) Column
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
-	file := fs.getSearchResultsFile(outputPath)
+	file := getSearchResultsFile(outputPath)
 	writer := csv.NewWriter(file)
 
 	printSearchInfo(pattern, outputPath)
