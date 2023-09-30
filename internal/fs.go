@@ -167,9 +167,15 @@ func (f FS) getPartitions() []string {
 	return filenames
 }
 
-func (f FS) writeSegmentFile(batchNo int, data any, extension ExtensionType) {
+func (f FS) getSegmentFilePath(batchNo int, extension ExtensionType) string {
 	filename := f.counter.get()
 	filePath := fmt.Sprintf("%s/%d/%d.%s", f.outputPath, batchNo, filename, extension)
+
+	return filePath
+}
+
+func (f FS) writeSegmentFile(batchNo int, data any, extension ExtensionType) {
+	filePath := f.getSegmentFilePath(batchNo, extension)
 
 	file, err := os.Create(filePath)
 	if err != nil {

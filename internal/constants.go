@@ -14,12 +14,19 @@ const (
 type ExtensionType string
 
 const (
-	ExtensionTypeJSON ExtensionType = "json"
-	ExtensionTypeCSV  ExtensionType = "csv"
+	ExtensionTypeJSON    ExtensionType = "json"
+	ExtensionTypeCSV     ExtensionType = "csv"
+	ExtensionTypeParquet ExtensionType = "parquet"
 )
 
-var dynamodbTypes = map[string]string{
+var DynamodbTypes = map[string]string{
 	"string": "S",
 	"number": "N",
 	"bool":   "BOOL",
+}
+
+var ParquetTypes = map[string]string{
+	"string": "type=BYTE_ARRAY, convertedtype=UTF8, encoding=PLAIN_DICTIONARY",
+	"number": "type=INT32",
+	"bool":   "type=BOOLEAN",
 }

@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+
+	"github.com/xitongsys/parquet-go-source/local"
+	"github.com/xitongsys/parquet-go/writer"
 )
 
 type Transformer interface {
@@ -27,7 +30,8 @@ func NewTransformer(fs FS, transformType TransformType, schema Schema, totalBatc
 	case TransformTypeDynamoDB:
 		transformer = DynamoDBTransformer{fs, schema}
 	case TransformTypeParquet:
-		transformer = ParquetTransformer{fs}
+		metadata := buildParquetMetadata(schema)
+		transformer = ParquetTransformer{fs, schema, metadata}
 	case TransformTypeJSON:
 		transformer = JSONTransformer{fs, schema}
 	case TransformTypeCSV:
@@ -79,12 +83,12 @@ func (dt DynamoDBTransformer) ProcessSegment(batchNo int, rows []Row) {
 
 			if columnName == dt.schema.Key {
 				attributes["Key"] = map[string]any{
-					dynamodbTypes[columnType]: parseValue(columnValue, columnType),
+					DynamodbTypes[columnType]: parseValue(columnValue, columnType),
 				}
 			}
 
 			attributes[columnName] = map[string]any{
-				dynamodbTypes[columnType]: parseValue(columnValue, columnType),
+				DynamodbTypes[columnType]: parseValue(columnValue, columnType),
 			}
 		}
 
@@ -102,14 +106,58 @@ func (dt DynamoDBTransformer) ProcessSegment(batchNo int, rows []Row) {
 }
 
 type ParquetTransformer struct {
-	fs FS
+	fs       FS
+	schema   Schema
+	metadata []string
+}
+
+func buildParquetMetadata(schema Schema) []string {
+	typeMetadata := make([]string, 0)
+
+	for _, columnName := range schema.Columns { // Order matters
+		columnType := schema.Types[columnName]
+
+		meta := fmt.Sprintf("name=%s, %s", columnName, ParquetTypes[columnType])
+		typeMetadata = append(typeMetadata, meta)
+	}
+
+	return typeMetadata
 }
 
 func (cs ParquetTransformer) BatchComplete(int) {}
 
-func (ParquetTransformer) ProcessSegment(batchNo int, row []Row) {
-	// TODO: impl
-	fmt.Println("parquet: process", len(row), "row for batch", batchNo)
+func (pt ParquetTransformer) ProcessSegment(batchNo int, rows []Row) {
+	filePath := pt.fs.getSegmentFilePath(batchNo, ExtensionTypeParquet)
+
+	lfw, err := local.NewLocalFileWriter(filePath)
+	if err != nil {
+		panic(err)
+	}
+
+	writer, err := writer.NewCSVWriter(pt.metadata, lfw, 1) // use only 1 goroutine
+	if err != nil {
+		panic(err)
+	}
+
+	for _, row := range rows {
+		record := make([]*string, len(row))
+
+		for i := 0; i < len(row); i++ {
+			record[i] = &row[i]
+		}
+
+		if err := writer.WriteString(record); err != nil {
+			panic(err)
+		}
+	}
+
+	if err := writer.WriteStop(); err != nil {
+		panic(err)
+	}
+
+	if err := lfw.Close(); err != nil {
+		panic(err)
+	}
 }
 
 type JSONTransformer struct {
