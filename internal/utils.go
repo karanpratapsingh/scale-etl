@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strconv"
 	"sync/atomic"
@@ -17,6 +19,13 @@ func NewCounter(val int32) Counter {
 func (c Counter) get() int32 {
 	atomic.AddInt32(c.val, 1)
 	return atomic.LoadInt32(c.val)
+}
+
+func generateHash(input string) string {
+	hash := sha256.Sum256([]byte(input))
+	hashString := hex.EncodeToString(hash[:])
+
+	return hashString[:16]
 }
 
 func copySlice[T any](input [][]T) [][]T {
