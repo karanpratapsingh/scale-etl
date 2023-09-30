@@ -48,9 +48,19 @@ func parseValue(columnValue string, columnType string) any {
 	}
 }
 
-// TODO: Add github docs link
 func HandlePanic() {
 	if r := recover(); r != nil {
 		fmt.Println("Error:", r)
+		fmt.Println("For more info try --help")
 	}
+}
+
+func ConcatenateArrays[T any](arrays ...[]T) []T {
+	var concatenated []T
+
+	for _, arr := range arrays {
+		concatenated = append(concatenated, arr...)
+	}
+
+	return concatenated
 }
