@@ -1,5 +1,11 @@
 package internal
 
+import "fmt"
+
+const ProjectLink = "https://github.com/karanpratapsingh/research-csv-etl"
+
+var Description = fmt.Sprintf("ETL tool for large CSV files. For more info checkout %s", ProjectLink)
+
 type Row = []string
 
 type TransformType string

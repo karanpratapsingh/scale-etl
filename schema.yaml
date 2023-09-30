@@ -1,0 +1,7 @@
+table_name: Products # (optional) required for dynamodb
+key: id # (optional) required for dynamodb
+columns:
+  - id: string
+  - name: string
+  - price: number
+  - in_stock: bool

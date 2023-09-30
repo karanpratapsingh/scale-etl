@@ -10,7 +10,7 @@ import (
 )
 
 type Processor struct {
-	fs          FS
+	partitioner Partitioner
 	wg          *sync.WaitGroup
 	schema      Schema
 	batchSize   int
@@ -27,19 +27,19 @@ type SegmentProcessor interface {
 	ProcessSegment(batchNo int, rows []Row)
 }
 
-func NewProcessor(fs FS, schema Schema, batchSize int, segmentSize int, delimiter rune) Processor {
+func NewProcessor(partitioner Partitioner, schema Schema, batchSize int, segmentSize int, delimiter rune) Processor {
 	printSegmentInfo(segmentSize)
 
 	var wg sync.WaitGroup
-	return Processor{fs, &wg, schema, batchSize, segmentSize, delimiter}
+	return Processor{partitioner, &wg, schema, batchSize, segmentSize, delimiter}
 }
 
-func (p *Processor) ProcessPartitions(totalPartitions int, partitions chan string, batchProcessor BatchProcessor) {
+func (p *Processor) ProcessPartitions(partitions chan string, totalPartitions int, batchProcessor BatchProcessor) {
 	MeasureExecTime("Processing complete", func() {
 		batchSize := p.batchSize
 
 		for i := 0; i < totalPartitions; i += batchSize {
-			batchNo := countBatches(i, batchSize) + 1
+			batchNo := p.CountBatches(i) + 1
 			end := min(totalPartitions, i+batchSize) // Last batch can be less than batchSize
 
 			MeasureExecTime(fmt.Sprintf("Processed batch %d", batchNo), func() {
@@ -59,7 +59,7 @@ func (p *Processor) ProcessPartitions(totalPartitions int, partitions chan strin
 func (p Processor) processPartition(batchNo int, partition string, batchProcessor BatchProcessor) {
 	defer p.wg.Done()
 
-	partitionFile := p.fs.getPartitionFile(partition)
+	partitionFile := p.partitioner.getPartitionFile(partition)
 	defer partitionFile.Close()
 
 	processRows := func(wg *sync.WaitGroup, rows []Row) {
@@ -107,6 +107,6 @@ func (p Processor) processPartition(batchNo int, partition string, batchProcesso
 	}
 }
 
-func countBatches(n int, batchSize int) int {
-	return n/batchSize + n%batchSize
+func (p Processor) CountBatches(n int) int {
+	return n/p.batchSize + n%p.batchSize
 }

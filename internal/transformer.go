@@ -3,7 +3,6 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/writer"
@@ -13,39 +12,29 @@ type Transformer interface {
 	BatchProcessor
 }
 
-func NewTransformer(fs FS, transformType TransformType, schema Schema, totalBatches int) Transformer {
+func NewTransformer(output Output, transformType TransformType, schema Schema) Transformer {
 	var transformer Transformer
-
-	// Delete existing output directory
-	if pathExists(fs.outputPath) {
-		os.RemoveAll(fs.outputPath)
-	}
-
-	// Create the directories for batches
-	for i := 1; i <= totalBatches; i += 1 {
-		makeDirectory(fmt.Sprintf("%s/%d", fs.outputPath, i))
-	}
 
 	switch transformType {
 	case TransformTypeDynamoDB:
-		transformer = DynamoDBTransformer{fs, schema}
+		transformer = DynamoDBTransformer{output, schema}
 	case TransformTypeParquet:
 		metadata := buildParquetMetadata(schema)
-		transformer = ParquetTransformer{fs, schema, metadata}
+		transformer = ParquetTransformer{output, schema, metadata}
 	case TransformTypeJSON:
-		transformer = JSONTransformer{fs, schema}
+		transformer = JSONTransformer{output, schema}
 	case TransformTypeCSV:
-		transformer = CSVTransformer{fs, schema}
+		transformer = CSVTransformer{output, schema}
 	default:
-		panic(fmt.Sprintf("transform type %s not supported", transformType))
+		panic(ErrTransformTypeNotSupported(transformType))
 	}
 
-	printSchemaInfo(transformType, schema)
+	PrintSchemaInfo(schema)
 	return transformer
 }
 
 type DynamoDBTransformer struct {
-	fs     FS
+	output Output
 	schema Schema
 }
 
@@ -102,11 +91,11 @@ func (dt DynamoDBTransformer) ProcessSegment(batchNo int, rows []Row) {
 		panic(err)
 	}
 
-	dt.fs.writeSegmentFile(batchNo, jsonData, ExtensionTypeJSON)
+	dt.output.writeSegmentFile(batchNo, jsonData, ExtensionTypeJSON)
 }
 
 type ParquetTransformer struct {
-	fs       FS
+	output   Output
 	schema   Schema
 	metadata []string
 }
@@ -127,7 +116,7 @@ func buildParquetMetadata(schema Schema) []string {
 func (cs ParquetTransformer) BatchComplete(int) {}
 
 func (pt ParquetTransformer) ProcessSegment(batchNo int, rows []Row) {
-	filePath := pt.fs.getSegmentFilePath(batchNo, ExtensionTypeParquet)
+	filePath := pt.output.getSegmentFilePath(batchNo, ExtensionTypeParquet)
 
 	lfw, err := local.NewLocalFileWriter(filePath)
 	if err != nil {
@@ -161,7 +150,7 @@ func (pt ParquetTransformer) ProcessSegment(batchNo int, rows []Row) {
 }
 
 type JSONTransformer struct {
-	fs     FS
+	output Output
 	schema Schema
 }
 
@@ -187,11 +176,11 @@ func (jt JSONTransformer) ProcessSegment(batchNo int, row []Row) {
 		panic(err)
 	}
 
-	jt.fs.writeSegmentFile(batchNo, jsonData, ExtensionTypeJSON)
+	jt.output.writeSegmentFile(batchNo, jsonData, ExtensionTypeJSON)
 }
 
 type CSVTransformer struct {
-	fs     FS
+	output Output
 	schema Schema
 }
 
@@ -199,5 +188,5 @@ func (cs CSVTransformer) BatchComplete(int) {}
 
 func (ct CSVTransformer) ProcessSegment(batchNo int, rows []Row) {
 	rows = append([]Row{ct.schema.Columns}, rows...) // Prepend header
-	ct.fs.writeSegmentFile(batchNo, rows, ExtensionTypeCSV)
+	ct.output.writeSegmentFile(batchNo, rows, ExtensionTypeCSV)
 }

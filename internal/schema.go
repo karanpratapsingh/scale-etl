@@ -1,6 +1,12 @@
 package internal
 
-import mapset "github.com/deckarep/golang-set/v2"
+import (
+	"fmt"
+	"os"
+
+	mapset "github.com/deckarep/golang-set/v2"
+	"gopkg.in/yaml.v2"
+)
 
 type Schema struct {
 	TableName string
@@ -10,29 +16,44 @@ type Schema struct {
 	Types     map[string]string
 }
 
-func (s *Schema) UnmarshalYAML(unmarshal func(any) error) error {
+func NewSchema(schemaPath string) Schema {
+	if !pathExists(schemaPath) {
+		panic(fmt.Sprintf("schema file %s doesn't exist", schemaPath))
+	}
+
+	var schema Schema
+
 	var yamlSchema struct { // YAML schema
-		TableName string              `yaml:"table_name"`
-		Key       string              `yaml:"key"`
+		TableName string              `yaml:"table_name,omitempty"`
+		Key       string              `yaml:"key,omitempty"`
 		Columns   []map[string]string `yaml:"columns"`
 	}
 
-	if err := unmarshal(&yamlSchema); err != nil {
-		return err
+	file, err := os.ReadFile(schemaPath)
+	if err != nil {
+		panic(fmt.Sprintf("error reading config file: %v\n", err))
 	}
 
-	s.TableName = yamlSchema.TableName
-	s.Key = yamlSchema.Key
-	s.Types = make(map[string]string)
+	if err := yaml.Unmarshal(file, &yamlSchema); err != nil {
+		panic(fmt.Errorf("error unmarshalling yaml: %v", err))
+	}
+
+	if len(yamlSchema.Columns) == 0 {
+		panic("schema definition is required")
+	}
+
+	schema.TableName = yamlSchema.TableName
+	schema.Key = yamlSchema.Key
+	schema.Types = make(map[string]string)
 
 	for _, columnMap := range yamlSchema.Columns {
 		for columnName, columnType := range columnMap {
-			s.Columns = append(s.Columns, columnName)
-			s.Types[columnName] = columnType
+			schema.Columns = append(schema.Columns, columnName)
+			schema.Types[columnName] = columnType
 		}
 	}
 
-	s.Header = mapset.NewSet(s.Columns...)
+	schema.Header = mapset.NewSet(schema.Columns...)
 
-	return nil
+	return schema
 }

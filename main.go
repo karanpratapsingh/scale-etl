@@ -11,68 +11,132 @@ import (
 func main() {
 	defer internal.HandlePanic()
 
-	var args internal.Args = internal.ParseArgs() // TODO: move to cli framework
-	var config internal.Config = internal.NewConfig(args.ConfigPath)
-
-	var fs = internal.NewFS(config.FilePath, config.PartitionDir, config.OutputDir)
-
 	app := &cli.App{
-		Name:  "csv-etl",
-		Usage: "csv etl",
+		Name:        "csv-etl",
+		Usage:       "partition, transform, and search large CSV files",
+		Description: internal.Description,
 		Commands: []*cli.Command{
 			{
-				Name:  "partitions",
-				Usage: "partition a csv file",
-				Action: func(*cli.Context) error {
-					return fs.PartitionFile(config.PartitionSize)
+				Name:  "partition",
+				Usage: "partition into multiple smaller files",
+				Flags: append(internal.PartitionerFlags(), internal.PartitionSizeFlag()),
+				Action: func(ctx *cli.Context) error {
+					filePath := ctx.String("file-path")
+					partitionDir := ctx.String("partition-dir")
+					partitionSize := ctx.Int("partition-size")
+
+					totalRows := internal.CountFileRows(filePath)
+					if err := internal.CheckPartitionSize(partitionSize, totalRows); err != nil {
+						return err
+					}
+
+					internal.PrintInputFileInfo(filePath, totalRows)
+
+					var partitioner = internal.NewPartitioner(filePath, partitionDir)
+
+					return partitioner.PartitionFile(partitionSize)
 				},
 			},
 			{
 				Name:  "transform",
-				Usage: "transform a csv file",
-				Action: func(*cli.Context) error {
-					partitions, totalPartitions, totalBatches := fs.LoadPartitions(config.PartitionSize, config.BatchSize)
-					var processor = internal.NewProcessor(fs, config.Schema, config.BatchSize, config.SegmentSize, config.Delimiter)
-					var transformer = internal.NewTransformer(fs, config.TransformType, config.Schema, totalBatches)
+				Usage: "transform partitions to a particular format",
+				Flags: append(
+					internal.ConcatenateArrays(
+						internal.PartitionerFlags(),
+						internal.BatchAndSegmentSizeFlags(),
+					),
+					internal.TransformTypeFlag(),
+					internal.OutputDirFlag(),
+					internal.SchemaPathFlag(),
+					internal.DelimiterFlag(),
+				),
+				Action: func(ctx *cli.Context) error {
+					filePath := ctx.String("file-path")
+					partitionDir := ctx.String("partition-dir")
+					batchSize := ctx.Int("batch-size")
+					segmentSize := ctx.Int("segment-size")
+					transformType := internal.TransformType(ctx.String("transform-type"))
+					outputDir := ctx.String("output-dir")
+					schemaPath := ctx.String("schema-path")
+					delimiter := []rune(ctx.String("delimiter"))[0]
 
-					processor.ProcessPartitions(totalPartitions, partitions, transformer)
+					totalRows := internal.CountFileRows(filePath)
+					internal.PrintInputFileInfo(filePath, totalRows)
+
+					var schema = internal.NewSchema(schemaPath)
+
+					internal.PrintSchemaInfo(schema)
+					internal.PrintTransformInfo(schema, transformType, delimiter)
+
+					if err := internal.CheckTransformType(transformType, schema); err != nil {
+						return err
+					}
+
+					var partitioner = internal.NewPartitioner(filePath, partitionDir)
+					var output = internal.NewOutput(filePath, outputDir)
+
+					partitions, totalPartitions := partitioner.LoadPartitions()
+					if err := internal.CheckBatchSize(batchSize, totalPartitions); err != nil {
+						return err
+					}
+
+					var processor = internal.NewProcessor(partitioner, schema, batchSize, segmentSize, delimiter)
+
+					totalBatches := processor.CountBatches(totalPartitions)
+					internal.PrintBatchInfo(totalBatches, batchSize)
+					output.PrepareOutputDirs(totalBatches)
+
+					var transformer = internal.NewTransformer(output, internal.TransformType(transformType), schema)
+					processor.ProcessPartitions(partitions, totalPartitions, transformer)
+
 					return nil
 				},
 			},
 			{
 				Name:  "search",
-				Usage: "search a csv file",
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:     "pattern",
-						Required: true,
-						Aliases:  []string{"p"},
-						Usage:    "Search pattern",
-					},
-					&cli.StringFlag{
-						Name:    "output",
-						Value:   "matches.csv",
-						Aliases: []string{"o"},
-						Usage:   "Output file path",
-					},
-				},
-				Action: func(c *cli.Context) error {
-					outputPath := c.String("output")
-					pattern := c.String("pattern")
+				Usage: "searches partitions for a pattern and outputs results",
+				Flags: append(
+					internal.ConcatenateArrays(
+						internal.SearchFlags(),
+						internal.PartitionerFlags(),
+						internal.BatchAndSegmentSizeFlags(),
+					),
+					internal.SchemaPathFlag(),
+					internal.DelimiterFlag(),
+				),
+				Action: func(ctx *cli.Context) error {
+					pattern := ctx.String("pattern")
+					outputPath := ctx.String("output")
+					filePath := ctx.String("file-path")
+					partitionDir := ctx.String("partition-dir")
+					batchSize := ctx.Int("batch-size")
+					segmentSize := ctx.Int("segment-size")
+					schemaPath := ctx.String("schema-path")
+					delimiter := []rune(ctx.String("delimiter"))[0]
 
-					partitions, totalPartitions, _ := fs.LoadPartitions(config.PartitionSize, config.BatchSize)
-					var processor = internal.NewProcessor(fs, config.Schema, config.BatchSize, config.SegmentSize, config.Delimiter)
-					var searcher = internal.NewSearcher(fs, config.Schema, pattern, outputPath)
+					var schema = internal.NewSchema(schemaPath)
 
-					processor.ProcessPartitions(totalPartitions, partitions, searcher)
+					var partitioner = internal.NewPartitioner(filePath, partitionDir)
+					partitions, totalPartitions := partitioner.LoadPartitions()
+
+					var processor = internal.NewProcessor(partitioner, schema, batchSize, segmentSize, delimiter)
+					var searcher = internal.NewSearcher(schema, pattern, outputPath)
+
+					processor.ProcessPartitions(partitions, totalPartitions, searcher)
 					return searcher.Cleanup()
 				},
 			},
 			{
 				Name:  "clean",
 				Usage: "clean partitions directory",
-				Action: func(*cli.Context) error {
-					return fs.CleanPartitions()
+				Flags: internal.PartitionerFlags(),
+				Action: func(ctx *cli.Context) error {
+					filePath := ctx.String("file-path")
+					partitionDir := ctx.String("partition-dir")
+
+					var partitioner = internal.NewPartitioner(filePath, partitionDir)
+
+					return partitioner.CleanPartitions()
 				},
 			},
 		},
