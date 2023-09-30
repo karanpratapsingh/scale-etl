@@ -47,7 +47,7 @@ func BatchAndSegmentSizeFlags() []cli.Flag {
 	}
 }
 
-func SchemaPathFlag() *cli.StringFlag { // TODO: do error checking right here
+func SchemaPathFlag() *cli.StringFlag {
 	return &cli.StringFlag{
 		Name:  "schema-path",
 		Value: "schema.yaml",
