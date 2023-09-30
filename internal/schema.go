@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"fmt"
 	"os"
 
 	mapset "github.com/deckarep/golang-set/v2"
@@ -18,7 +17,7 @@ type Schema struct {
 
 func NewSchema(schemaPath string) Schema {
 	if !pathExists(schemaPath) {
-		panic(fmt.Sprintf("schema file %s doesn't exist", schemaPath))
+		panic(ErrFileNotFound(schemaPath))
 	}
 
 	var schema Schema
@@ -31,15 +30,15 @@ func NewSchema(schemaPath string) Schema {
 
 	file, err := os.ReadFile(schemaPath)
 	if err != nil {
-		panic(fmt.Sprintf("error reading config file: %v\n", err))
+		panic(ErrReadingFile(err))
 	}
 
 	if err := yaml.Unmarshal(file, &yamlSchema); err != nil {
-		panic(fmt.Errorf("error unmarshalling yaml: %v", err))
+		panic(err)
 	}
 
 	if len(yamlSchema.Columns) == 0 {
-		panic("schema definition is required")
+		panic(ErrSchemaRequired)
 	}
 
 	schema.TableName = yamlSchema.TableName

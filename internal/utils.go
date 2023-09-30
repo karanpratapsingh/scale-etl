@@ -44,7 +44,7 @@ func parseValue(columnValue string, columnType string) any {
 		}
 		return val
 	default:
-		panic(fmt.Sprintf("column type %s is not supported", columnType))
+		panic(ErrUnsupportedColumnType(columnType))
 	}
 }
 

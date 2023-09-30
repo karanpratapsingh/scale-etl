@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
@@ -13,7 +12,7 @@ func CountFileRows(path string) int {
 
 	output, err := cmd.Output()
 	if err != nil {
-		panic(fmt.Errorf("failed to count rows for file %s: %v", path, err))
+		panic(ErrCountingRows(path, err))
 	}
 
 	parts := strings.Fields(string(output))

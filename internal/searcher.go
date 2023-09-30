@@ -21,8 +21,8 @@ type ColumnSearcher struct {
 }
 
 func NewSearcher(schema Schema, pattern string, outputPath string) ColumnSearcher {
-	if pattern == "" { // TODO: move to errors
-		panic("pattern string should not be empty")
+	if pattern == "" {
+		panic(ErrEmptySearchPattern)
 	}
 
 	// Delete existing output file

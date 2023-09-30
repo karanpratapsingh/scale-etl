@@ -14,7 +14,7 @@ type Partitioner struct {
 
 func NewPartitioner(filePath string, partitionDir string) Partitioner {
 	if !pathExists(filePath) {
-		panic(fmt.Sprintf("file %s doesn't exist", filePath))
+		panic(ErrFileNotFound(filePath))
 	}
 
 	filename := getFileName(filePath)

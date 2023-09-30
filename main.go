@@ -25,14 +25,14 @@ func main() {
 					partitionDir := ctx.String("partition-dir")
 					partitionSize := ctx.Int("partition-size")
 
+					var partitioner = internal.NewPartitioner(filePath, partitionDir)
+
 					totalRows := internal.CountFileRows(filePath)
 					if err := internal.CheckPartitionSize(partitionSize, totalRows); err != nil {
 						return err
 					}
 
 					internal.PrintInputFileInfo(filePath, totalRows)
-
-					var partitioner = internal.NewPartitioner(filePath, partitionDir)
 
 					return partitioner.PartitionFile(partitionSize)
 				},
@@ -60,6 +60,8 @@ func main() {
 					schemaPath := ctx.String("schema-path")
 					delimiter := []rune(ctx.String("delimiter"))[0]
 
+					var partitioner = internal.NewPartitioner(filePath, partitionDir)
+
 					totalRows := internal.CountFileRows(filePath)
 					internal.PrintInputFileInfo(filePath, totalRows)
 
@@ -72,7 +74,6 @@ func main() {
 						return err
 					}
 
-					var partitioner = internal.NewPartitioner(filePath, partitionDir)
 					var output = internal.NewOutput(filePath, outputDir)
 
 					partitions, totalPartitions := partitioner.LoadPartitions()
