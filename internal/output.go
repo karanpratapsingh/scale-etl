@@ -8,11 +8,8 @@ import (
 )
 
 type Output struct {
-	filePath       string
-	filename       string
-	hashedFilename string
-	outputPath     string
-	counter        Counter
+	outputPath string
+	counter    Counter
 }
 
 func NewOutput(filePath string, outputDir string) Output {
@@ -21,13 +18,7 @@ func NewOutput(filePath string, outputDir string) Output {
 	outputPath := fmt.Sprintf("%s/%s", outputDir, hashedFilename)
 	counter := NewCounter(0)
 
-	return Output{
-		filePath,
-		filename,
-		hashedFilename,
-		outputPath,
-		counter,
-	}
+	return Output{outputPath, counter}
 }
 
 func (o Output) PrepareOutputDirs(totalBatches int) {

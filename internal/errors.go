@@ -34,6 +34,7 @@ func ErrUnsupportedColumnType(columnType string) error {
 }
 
 var ErrDynamoDBTableNotFound = errors.New("table name is required for transform type dynamodb")
+
 var ErrDynamoDBKeyNotFound = errors.New("key is required for transform type dynamodb")
 
 func ErrTransformTypeNotSupported(transformType TransformType) error {
