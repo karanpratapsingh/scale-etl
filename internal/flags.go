@@ -2,6 +2,30 @@ package internal
 
 import "github.com/urfave/cli/v2"
 
+var TransformSearchCommonFlags = append(
+	ConcatenateArrays(
+		PartitionerFlags(),
+		BatchAndSegmentSizeFlags(),
+	),
+	SchemaPathFlag(),
+	DelimiterFlag(),
+)
+
+var PartitionCommandFlags = append(PartitionerFlags(), PartitionSizeFlag())
+
+var TransformCommandFlags = append(
+	TransformSearchCommonFlags,
+	TransformTypeFlag(),
+	OutputDirFlag(),
+)
+
+var SearchCommandFlags = ConcatenateArrays(
+	SearchFlags(),
+	TransformSearchCommonFlags,
+)
+
+var CleanCommandFlags = PartitionerFlags()
+
 func PartitionerFlags() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{

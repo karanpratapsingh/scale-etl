@@ -46,12 +46,12 @@ func PrintBatchInfo(totalBatches, batchSize int) {
 	fmt.Printf("Batches: %d, Size: %d\n", totalBatches, batchSize)
 }
 
-func printPartitionInfo(totalPartitions, partitionSize int) {
-	fmt.Printf("Partitions: %d, Size: %d\n", totalPartitions, partitionSize)
+func PrintSegmentInfo(segmentSize int) {
+	fmt.Printf("Segment size: %d\n", segmentSize)
 }
 
-func printSegmentInfo(segmentSize int) {
-	fmt.Printf("Segment size: %d\n", segmentSize)
+func printPartitionInfo(totalPartitions, partitionSize int) {
+	fmt.Printf("Partitions: %d, Size: %d\n", totalPartitions, partitionSize)
 }
 
 func printSearchInfo(pattern, outputPath string) {

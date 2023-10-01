@@ -28,8 +28,6 @@ type SegmentProcessor interface {
 }
 
 func NewProcessor(partitioner Partitioner, schema Schema, batchSize int, segmentSize int, delimiter rune) Processor {
-	printSegmentInfo(segmentSize)
-
 	var wg sync.WaitGroup
 	return Processor{partitioner, &wg, schema, batchSize, segmentSize, delimiter}
 }

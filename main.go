@@ -2,7 +2,6 @@ package main
 
 import (
 	"csv-ingest/internal"
-	"fmt"
 	"os"
 
 	"github.com/urfave/cli/v2"
@@ -19,7 +18,7 @@ func main() {
 			{
 				Name:  "partition",
 				Usage: "partition into multiple smaller files",
-				Flags: append(internal.PartitionerFlags(), internal.PartitionSizeFlag()),
+				Flags: internal.PartitionCommandFlags,
 				Action: func(ctx *cli.Context) error {
 					filePath := ctx.String("file-path")
 					partitionDir := ctx.String("partition-dir")
@@ -40,16 +39,7 @@ func main() {
 			{
 				Name:  "transform",
 				Usage: "transform partitions to a particular format",
-				Flags: append(
-					internal.ConcatenateArrays(
-						internal.PartitionerFlags(),
-						internal.BatchAndSegmentSizeFlags(),
-					),
-					internal.TransformTypeFlag(),
-					internal.OutputDirFlag(),
-					internal.SchemaPathFlag(),
-					internal.DelimiterFlag(),
-				),
+				Flags: internal.TransformCommandFlags,
 				Action: func(ctx *cli.Context) error {
 					filePath := ctx.String("file-path")
 					partitionDir := ctx.String("partition-dir")
@@ -87,6 +77,8 @@ func main() {
 					internal.PrintBatchInfo(totalBatches, batchSize)
 					output.PrepareOutputDirs(totalBatches)
 
+					internal.PrintSegmentInfo(segmentSize)
+
 					var transformer = internal.NewTransformer(output, internal.TransformType(transformType), schema)
 					processor.ProcessPartitions(partitions, totalPartitions, transformer)
 
@@ -96,15 +88,7 @@ func main() {
 			{
 				Name:  "search",
 				Usage: "searches partitions for a pattern and outputs results",
-				Flags: append(
-					internal.ConcatenateArrays(
-						internal.SearchFlags(),
-						internal.PartitionerFlags(),
-						internal.BatchAndSegmentSizeFlags(),
-					),
-					internal.SchemaPathFlag(),
-					internal.DelimiterFlag(),
-				),
+				Flags: internal.SearchCommandFlags,
 				Action: func(ctx *cli.Context) error {
 					pattern := ctx.String("pattern")
 					outputPath := ctx.String("output")
@@ -123,6 +107,8 @@ func main() {
 					var processor = internal.NewProcessor(partitioner, schema, batchSize, segmentSize, delimiter)
 					var searcher = internal.NewSearcher(schema, pattern, outputPath)
 
+					internal.PrintSegmentInfo(segmentSize)
+
 					processor.ProcessPartitions(partitions, totalPartitions, searcher)
 					return searcher.Cleanup()
 				},
@@ -130,7 +116,7 @@ func main() {
 			{
 				Name:  "clean",
 				Usage: "clean partitions directory",
-				Flags: internal.PartitionerFlags(),
+				Flags: internal.CleanCommandFlags,
 				Action: func(ctx *cli.Context) error {
 					filePath := ctx.String("file-path")
 					partitionDir := ctx.String("partition-dir")
@@ -144,6 +130,6 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 }
