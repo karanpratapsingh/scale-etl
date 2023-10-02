@@ -16,7 +16,7 @@ func MeasureExecTime(id string, function func()) {
 func PrintInputFileInfo(filePath string, totalRows int) {
 	inputFileSize := getFileSize(filePath)
 
-	fmt.Printf("File: %s, Size: %f MB, Rows: %d'\n", filePath, inputFileSize, totalRows)
+	fmt.Printf("File: %s, Size: %f MB, Rows: %d\n", filePath, inputFileSize, totalRows)
 }
 
 func PrintSchemaInfo(schema Schema) {
