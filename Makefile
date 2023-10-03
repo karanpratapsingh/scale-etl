@@ -16,6 +16,11 @@ clean:
 build:
 	go build -o bin/csv-etl main.go
 
+lint:
+	go fmt ./...
+	go vet ./...
+	staticcheck ./...
+
 generate_sample_data:
 	go run scripts/generate_sample_data.go samples/sample_1k.csv 1000
 	go run scripts/generate_sample_data.go samples/sample_10k.csv 10000
