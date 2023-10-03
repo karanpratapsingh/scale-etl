@@ -2,118 +2,141 @@ package internal
 
 import "github.com/urfave/cli/v2"
 
-var TransformSearchCommonFlags = append(
-	ConcatenateArrays(
-		PartitionerFlags(),
-		BatchAndSegmentSizeFlags(),
-	),
-	SchemaPathFlag(),
-	DelimiterFlag(),
-)
-
-var PartitionCommandFlags = append(PartitionerFlags(), PartitionSizeFlag())
+var PartitionCommandFlags = append(partitionerFlags, partitionSizeFlag)
 
 var TransformCommandFlags = append(
-	TransformSearchCommonFlags,
-	TransformTypeFlag(),
-	OutputDirFlag(),
+	transformSearchCommonFlags,
+	transformTypeFlag,
+	outputDirFlag,
 )
 
 var SearchCommandFlags = ConcatenateArrays(
-	SearchFlags(),
-	TransformSearchCommonFlags,
+	searchFlags,
+	transformSearchCommonFlags,
 )
 
-var CleanCommandFlags = PartitionerFlags()
-
-func PartitionerFlags() []cli.Flag {
-	return []cli.Flag{
-		&cli.StringFlag{
-			Name:     "file-path",
-			Required: true,
-			Usage:    "File path",
-		},
-		&cli.StringFlag{
-			Name:  "partition-dir",
-			Value: "partitions",
-			Usage: "Partition output dir",
-		},
-	}
+var LoaderCommandFlags = []cli.Flag{
+	filePathFlag,
+	outputDirFlag,
+	poolSizeFlag,
+	commandFlag,
 }
 
-func PartitionSizeFlag() *cli.IntFlag {
-	return &cli.IntFlag{
-		Name:     "partition-size",
+var CleanCommandFlags = partitionerFlags
+
+var transformSearchCommonFlags = append(
+	ConcatenateArrays(
+		partitionerFlags,
+		batchAndSegmentSizeFlags,
+	),
+	schemaPathFlag,
+	delimiterFlag,
+)
+
+var partitionerFlags = []cli.Flag{
+	&cli.StringFlag{
+		Name:     "file-path",
 		Required: true,
-		Usage:    "Partition size",
-	}
+		Usage:    "File path",
+	},
+	&cli.StringFlag{
+		Name:  "partition-dir",
+		Value: "partitions",
+		Usage: "Partition output dir",
+	},
 }
 
-func BatchAndSegmentSizeFlags() []cli.Flag {
-	return []cli.Flag{
-		&cli.IntFlag{
-			Name:  "batch-size",
-			Value: 5,
-			Usage: "Batch size",
-			Action: func(_ *cli.Context, batchSize int) error {
-				if batchSize < 1 {
-					return ErrInsufficientBatchSize
-				}
+var filePathFlag = &cli.StringFlag{
+	Name:     "file-path",
+	Required: true,
+	Usage:    "File path",
+}
 
-				return nil
-			},
+var partitionSizeFlag = &cli.IntFlag{
+	Name:     "partition-size",
+	Required: true,
+	Usage:    "Partition size",
+	Action: func(_ *cli.Context, partitionSize int) error {
+		if partitionSize < 1 {
+			return ErrInsufficientPartitionSize
+		}
+
+		return nil
+	},
+}
+
+var batchAndSegmentSizeFlags = []cli.Flag{
+	&cli.IntFlag{
+		Name:  "batch-size",
+		Value: 5,
+		Usage: "Batch size",
+		Action: func(_ *cli.Context, batchSize int) error {
+			if batchSize < 1 {
+				return ErrInsufficientBatchSize
+			}
+
+			return nil
 		},
-		&cli.IntFlag{
-			Name:     "segment-size",
-			Required: true,
-			Usage:    "Segment size",
+	},
+	&cli.IntFlag{
+		Name:     "segment-size",
+		Required: true,
+		Usage:    "Segment size",
+		Action: func(_ *cli.Context, segmentSize int) error {
+			if segmentSize < 1 {
+				return ErrInsufficientSegmentSize
+			}
+
+			return nil
 		},
-	}
+	},
 }
 
-func SchemaPathFlag() *cli.StringFlag {
-	return &cli.StringFlag{
-		Name:  "schema-path",
-		Value: "schema.yaml",
-		Usage: "Schema file path",
-	}
+var schemaPathFlag = &cli.StringFlag{
+	Name:  "schema-path",
+	Value: "schema.yaml",
+	Usage: "Schema file path",
 }
 
-func SearchFlags() []cli.Flag {
-	return []cli.Flag{
-		&cli.StringFlag{
-			Name:     "pattern",
-			Required: true,
-			Usage:    "Search pattern",
-		},
-		&cli.StringFlag{
-			Name:  "output",
-			Value: "matches.csv",
-			Usage: "Output file path",
-		},
-	}
+var searchFlags = []cli.Flag{
+	&cli.StringFlag{
+		Name:     "pattern",
+		Required: true,
+		Usage:    "Search pattern",
+	},
+	&cli.StringFlag{
+		Name:  "output",
+		Value: "matches.csv",
+		Usage: "Output file path",
+	},
 }
 
-func TransformTypeFlag() *cli.StringFlag {
-	return &cli.StringFlag{
-		Name:  "transform-type",
-		Value: "csv",
-		Usage: "Transform type",
-	}
+var transformTypeFlag = &cli.StringFlag{
+	Name:  "transform-type",
+	Value: "csv",
+	Usage: "Transform type",
 }
 
-func DelimiterFlag() *cli.StringFlag {
-	return &cli.StringFlag{
-		Name:  "delimiter",
-		Value: ",",
-		Usage: "Delimiter",
-	}
+var delimiterFlag = &cli.StringFlag{
+	Name:  "delimiter",
+	Value: ",",
+	Usage: "Delimiter",
 }
 
-func OutputDirFlag() *cli.StringFlag {
-	return &cli.StringFlag{
-		Name:  "output-dir",
-		Value: "output",
-		Usage: "Output dir",
-	}
+var poolSizeFlag = &cli.IntFlag{
+	Name:     "pool-size",
+	Required: true,
+	Usage:    "Request pool size",
+}
+
+var commandFlag = &cli.StringFlag{
+	Name:     "command",
+	Required: true,
+	Usage:    "command executed for each segment",
+}
+
+var outputDirFlag = &cli.StringFlag{
+	Name:  "output-dir",
+	Value: "output",
+	Usage: "Output dir",
 }

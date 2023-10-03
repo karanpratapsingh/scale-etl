@@ -2,14 +2,26 @@ package internal
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 )
 
+type PartitionInfo struct {
+	TotalRows  int         `json:"total_rows"`
+	Partitions []Partition `json:"partitions"`
+}
+
+type Partition struct {
+	Start int `json:"start"`
+	End   int `json:"end"`
+}
+
 type Partitioner struct {
-	filePath      string
-	filename      string
-	partitionPath string
+	filePath     string
+	filename     string
+	infoFilePath string
 }
 
 func NewPartitioner(filePath string, partitionDir string) Partitioner {
@@ -17,69 +29,71 @@ func NewPartitioner(filePath string, partitionDir string) Partitioner {
 		panic(ErrFileNotFound(filePath))
 	}
 
+	makeDirectory(partitionDir)
+
 	filename := getFileName(filePath)
 	hashedFilename := generateHash(filename)
-	partitionPath := fmt.Sprintf("%s/%s", partitionDir, hashedFilename)
+	infoFilePath := fmt.Sprintf("%s/%s.json", partitionDir, hashedFilename)
 
-	return Partitioner{filePath, filename, partitionPath}
+	return Partitioner{filePath, filename, infoFilePath}
 }
 
 func (pt Partitioner) PartitionFile(partitionSize int) (err error) {
-	if !pathExists(pt.partitionPath) {
-		makeDirectory(pt.partitionPath)
+	MeasureExecTime("Partitioning complete", func() {
+		fmt.Printf("Writing partition info for %s at %s\n", pt.filename, pt.infoFilePath)
+		err = pt.createPartitions(partitionSize)
+	})
 
-		MeasureExecTime("Partitioning complete", func() {
-			fmt.Printf("Partitioning %s in directory %s\n", pt.filename, pt.partitionPath)
-			err = pt.createPartitions(partitionSize)
-		})
-	} else {
-		fmt.Println("Found partitions for", pt.filename)
+	if err != nil {
+		return err
 	}
 
-	totalPartitions := len(pt.getPartitions())
+	info := pt.GetPartitionsInfo()
+	totalPartitions := len(info.Partitions)
+
+	PrintInputFileInfo(pt.filePath, info.TotalRows)
 	printPartitionInfo(totalPartitions, partitionSize)
 
-	return err
+	return nil
 }
 
-func (pt Partitioner) LoadPartitions() (chan string, int) {
-	partitionsPaths := pt.getPartitions()
-	totalPartitions := len(partitionsPaths)
+func (pt Partitioner) StreamPartitions() (chan Partition, int) {
+	partitions := pt.GetPartitionsInfo().Partitions
+	totalPartitions := len(partitions)
 
-	var partitions = make(chan string)
+	var partitionsChan = make(chan Partition)
 	go func() {
-		for _, partition := range partitionsPaths {
-			partitions <- partition
+		for _, partition := range partitions {
+			partitionsChan <- partition
 		}
 
-		close(partitions)
+		close(partitionsChan)
 	}()
 
-	return partitions, totalPartitions
+	return partitionsChan, totalPartitions
 }
 
 func (pt Partitioner) CleanPartitions() error {
-	err := os.RemoveAll(pt.partitionPath)
+	err := os.RemoveAll(pt.infoFilePath)
 	if err == nil {
-		fmt.Println("Cleaned partitions directory:", pt.partitionPath)
+		fmt.Println("Cleaned partition info file:", pt.infoFilePath)
 	}
 	return err
 }
 
-func (pt Partitioner) getPartitions() []string {
-	file, err := os.Open(pt.partitionPath)
+func (pt Partitioner) GetPartitionsInfo() PartitionInfo {
+	file, err := os.Open(pt.infoFilePath)
 	if err != nil {
 		panic(ErrPartitionsNotFound(err))
 	}
 	defer file.Close()
 
-	// Edge case: Readdirnames doesn't distinguish between files and directories
-	filenames, err := file.Readdirnames(-1)
-	if err != nil {
+	var partitionInfo PartitionInfo
+	if err := json.NewDecoder(file).Decode(&partitionInfo); err != nil {
 		panic(err)
 	}
 
-	return filenames
+	return partitionInfo
 }
 
 func (pt Partitioner) createPartitions(partitionSize int) error {
@@ -89,56 +103,65 @@ func (pt Partitioner) createPartitions(partitionSize int) error {
 	}
 	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
+	reader := bufio.NewReader(file)
 
-	partitionCount := 1
-	lines := 0
+	partitions := make([]Partition, 0)
+	size := 0
 
-	outputFile := pt.createPartitionFile(fmt.Sprint(partitionCount))
-	defer outputFile.Close()
+	totalRows := 0
+	start := 0
+	end := 0
 
-	writer := bufio.NewWriter(outputFile)
+	for {
+		line, err := reader.ReadBytes('\n')
 
-	for scanner.Scan() {
-		line := scanner.Text()
-		_, err := fmt.Fprintln(writer, line)
-		if err != nil {
-			panic(err)
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return err
 		}
 
-		lines++
-		if lines >= partitionSize {
-			// Close current partition
-			writer.Flush()
-			lines = 0
-			partitionCount++
-			outputFile.Close()
+		totalRows += 1
+		end += len(line)
+		size += 1
 
-			// Start new partition
-			outputFile = pt.createPartitionFile(fmt.Sprint(partitionCount))
-			defer outputFile.Close()
-
-			writer = bufio.NewWriter(outputFile)
+		if size >= partitionSize {
+			partitions = append(partitions, Partition{start, end})
+			size = 0
+			start = end
 		}
 	}
 
-	return writer.Flush()
+	// Append partition for remaining lines
+	if size > 0 {
+		partitions = append(partitions, Partition{start, end})
+	}
+
+	if err := checkPartitionSize(partitionSize, totalRows); err != nil {
+		return err
+	}
+
+	return pt.writePartitionInfoFile(PartitionInfo{totalRows, partitions})
 }
 
-func (pt Partitioner) createPartitionFile(partition string) *os.File {
-	partitionPath := fmt.Sprintf("%s/%s", pt.partitionPath, partition)
-
-	file, err := os.Create(partitionPath)
+func (pt Partitioner) writePartitionInfoFile(info PartitionInfo) error {
+	jsonData, err := json.Marshal(info)
 	if err != nil {
-		panic(err)
+		return err
 	}
-	return file
+
+	file, err := os.Create(pt.infoFilePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.Write(jsonData)
+	return err
 }
 
-func (pt Partitioner) getPartitionFile(partition string) *os.File {
-	partitionPath := fmt.Sprintf("%s/%s", pt.partitionPath, partition)
-
-	file, err := os.Open(partitionPath)
+func (pt Partitioner) getInputFile() *os.File {
+	file, err := os.Open(pt.filePath)
 	if err != nil {
 		panic(err)
 	}

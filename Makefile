@@ -7,6 +7,9 @@ transform:
 search:
 	go run main.go search --file-path samples/sample_10m.csv --segment-size 10000 --pattern abc
 
+load:
+	go run main.go load --file-path samples/sample_10m.csv --pool-size 10 --command "echo"
+
 clean:
 	go run main.go clean --file-path samples/sample_10m.csv
 

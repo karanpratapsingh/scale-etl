@@ -26,13 +26,6 @@ func main() {
 
 					var partitioner = internal.NewPartitioner(filePath, partitionDir)
 
-					totalRows := internal.CountFileRows(filePath)
-					if err := internal.CheckPartitionSize(partitionSize, totalRows); err != nil {
-						return err
-					}
-
-					internal.PrintInputFileInfo(filePath, totalRows)
-
 					return partitioner.PartitionFile(partitionSize)
 				},
 			},
@@ -52,8 +45,8 @@ func main() {
 
 					var partitioner = internal.NewPartitioner(filePath, partitionDir)
 
-					totalRows := internal.CountFileRows(filePath)
-					internal.PrintInputFileInfo(filePath, totalRows)
+					partitionsInfo := partitioner.GetPartitionsInfo()
+					internal.PrintInputFileInfo(filePath, partitionsInfo.TotalRows)
 
 					var schema = internal.NewSchema(schemaPath)
 
@@ -66,7 +59,7 @@ func main() {
 
 					var output = internal.NewOutput(filePath, outputDir)
 
-					partitions, totalPartitions := partitioner.LoadPartitions()
+					partitions, totalPartitions := partitioner.StreamPartitions()
 					if err := internal.CheckBatchSize(batchSize, totalPartitions); err != nil {
 						return err
 					}
@@ -102,7 +95,7 @@ func main() {
 					var schema = internal.NewSchema(schemaPath)
 
 					var partitioner = internal.NewPartitioner(filePath, partitionDir)
-					partitions, totalPartitions := partitioner.LoadPartitions()
+					partitions, totalPartitions := partitioner.StreamPartitions()
 
 					var processor = internal.NewProcessor(partitioner, schema, batchSize, segmentSize, delimiter)
 					var searcher = internal.NewSearcher(schema, pattern, outputPath)
