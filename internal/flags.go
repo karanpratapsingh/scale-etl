@@ -46,6 +46,13 @@ func PartitionSizeFlag() *cli.IntFlag {
 		Name:     "partition-size",
 		Required: true,
 		Usage:    "Partition size",
+		Action: func(_ *cli.Context, partitionSize int) error {
+			if partitionSize < 1 {
+				return ErrInsufficientPartitionSize
+			}
+
+			return nil
+		},
 	}
 }
 
@@ -67,6 +74,13 @@ func BatchAndSegmentSizeFlags() []cli.Flag {
 			Name:     "segment-size",
 			Required: true,
 			Usage:    "Segment size",
+			Action: func(_ *cli.Context, segmentSize int) error {
+				if segmentSize < 1 {
+					return ErrInsufficientSegmentSize
+				}
+
+				return nil
+			},
 		},
 	}
 }

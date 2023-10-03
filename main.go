@@ -26,13 +26,6 @@ func main() {
 
 					var partitioner = internal.NewPartitioner(filePath, partitionDir)
 
-					totalRows := internal.CountFileRows(filePath)
-					if err := internal.CheckPartitionSize(partitionSize, totalRows); err != nil {
-						return err
-					}
-
-					internal.PrintInputFileInfo(filePath, totalRows)
-
 					return partitioner.PartitionFile(partitionSize)
 				},
 			},
@@ -52,8 +45,8 @@ func main() {
 
 					var partitioner = internal.NewPartitioner(filePath, partitionDir)
 
-					totalRows := internal.CountFileRows(filePath)
-					internal.PrintInputFileInfo(filePath, totalRows)
+					partitionsInfo := partitioner.GetPartitionsInfo()
+					internal.PrintInputFileInfo(filePath, partitionsInfo.TotalRows)
 
 					var schema = internal.NewSchema(schemaPath)
 

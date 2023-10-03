@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"bufio"
+	"bytes"
 	"encoding/csv"
 	"fmt"
 	"io"
@@ -32,7 +34,7 @@ func NewProcessor(partitioner Partitioner, schema Schema, batchSize int, segment
 	return Processor{partitioner, &wg, schema, batchSize, segmentSize, delimiter}
 }
 
-func (p *Processor) ProcessPartitions(partitions chan string, totalPartitions int, batchProcessor BatchProcessor) {
+func (p *Processor) ProcessPartitions(partitions chan Partition, totalPartitions int, batchProcessor BatchProcessor) {
 	MeasureExecTime("Processing complete", func() {
 		batchSize := p.batchSize
 
@@ -43,9 +45,10 @@ func (p *Processor) ProcessPartitions(partitions chan string, totalPartitions in
 			MeasureExecTime(fmt.Sprintf("Processed batch %d", batchNo), func() {
 				for j := i; j < end; j += 1 {
 					partition := <-partitions
+					partitionNo := j + 1
 
 					p.wg.Add(1)
-					go p.processPartition(batchNo, partition, batchProcessor)
+					go p.processPartition(batchNo, partitionNo, partition, batchProcessor)
 				}
 				p.wg.Wait()
 				batchProcessor.BatchComplete(batchNo)
@@ -54,10 +57,10 @@ func (p *Processor) ProcessPartitions(partitions chan string, totalPartitions in
 	})
 }
 
-func (p Processor) processPartition(batchNo int, partition string, batchProcessor BatchProcessor) {
+func (p Processor) processPartition(batchNo int, partitionNo int, partition Partition, batchProcessor BatchProcessor) {
 	defer p.wg.Done()
 
-	partitionFile := p.partitioner.getPartitionFile(partition)
+	partitionFile := p.partitioner.getInputFile()
 	defer partitionFile.Close()
 
 	processRows := func(wg *sync.WaitGroup, rows []Row) {
@@ -65,27 +68,42 @@ func (p Processor) processPartition(batchNo int, partition string, batchProcesso
 		batchProcessor.ProcessSegment(batchNo, rows)
 	}
 
-	var rows []Row
-
-	reader := csv.NewReader(partitionFile)
-	reader.Comma = p.delimiter
-
-	row, err := reader.Read()
-	if err != nil {
+	if _, err := partitionFile.Seek(int64(partition.Start), 0); err != nil {
 		panic(err)
 	}
 
-	// Skip csv header (if present)
-	rowSet := mapset.NewSet(row...)
-	if !rowSet.Equal(p.schema.Header) {
-		rows = append(rows, row)
+	bufferReader := bufio.NewReader(partitionFile)
+	rawTxt := make([]byte, partition.End-partition.Start)
+
+	if _, err := bufferReader.Read(rawTxt); err != nil {
+		panic(err)
+	}
+
+	reader := csv.NewReader(bytes.NewReader(rawTxt))
+	reader.Comma = p.delimiter
+
+	var rows []Row
+
+	// Skip csv header from first partition
+	if partitionNo == 1 {
+		header, err := reader.Read()
+		if err != nil {
+			panic(err)
+		}
+
+		rowSet := mapset.NewSet(header...)
+		if !rowSet.Equal(p.schema.Header) {
+			panic(ErrUnexpectedNonHeaderRow)
+		}
+
+		fmt.Printf("skipping header %s\n", header)
 	}
 
 	for {
 		row, err := reader.Read()
 
 		if err == io.EOF {
-			// Remaining rows when window size is less than batch size
+			// Process the remaining rows
 			if len(rows) != 0 {
 				p.wg.Add(1)
 				go processRows(p.wg, copySlice(rows))
@@ -96,11 +114,10 @@ func (p Processor) processPartition(batchNo int, partition string, batchProcesso
 		}
 
 		rows = append(rows, row)
-
 		if len(rows) == p.segmentSize {
 			p.wg.Add(1)
 			go processRows(p.wg, copySlice(rows)) // Copy slice for goroutine
-			rows = rows[:0]                       // Reset batch window
+			rows = rows[:0]                       // Reset segment window
 		}
 	}
 }

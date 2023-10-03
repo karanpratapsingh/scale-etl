@@ -2,7 +2,7 @@ partition:
 	go run main.go partition --file-path samples/sample_10m.csv --partition-size 100000
 
 transform:
-	go run main.go transform --file-path samples/sample_10m.csv --batch-size 10 --segment-size 10000
+	go run main.go transform --file-path samples/sample_10m.csv --segment-size 10000
 
 search:
 	go run main.go search --file-path samples/sample_10m.csv --segment-size 10000 --pattern abc

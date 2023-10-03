@@ -5,6 +5,8 @@ import (
 	"fmt"
 )
 
+var ErrUnexpectedNonHeaderRow = errors.New("unexpected non-header row")
+
 func ErrPartitionsNotFound(err error) error {
 	return fmt.Errorf("partitions not found, make sure to run the partition command first.\n%v", err)
 }
@@ -17,15 +19,15 @@ func ErrReadingFile(err error) error {
 	return fmt.Errorf("error reading config file: %v", err)
 }
 
-func ErrCountingRows(path string, err error) error {
-	return fmt.Errorf("failed to count rows for file %s: %v", path, err)
-}
-
 var ErrInsufficientBatchSize = errors.New("batch size cannot be less than 1")
 
 func ErrBatchSizeTooLarge(batchSize, totalPartitions int) error {
 	return fmt.Errorf("batch size (%d) should be less than total partitions (%d)", batchSize, totalPartitions)
 }
+
+var ErrInsufficientPartitionSize = errors.New("partition size cannot be less than 1")
+
+var ErrInsufficientSegmentSize = errors.New("segment size cannot be less than 1")
 
 func ErrPartitionSizeTooLarge(partitionSize, totalRows int) error {
 	return fmt.Errorf("partition size (%d) should be less than or equal to total number of rows (%d)", partitionSize, totalRows)
@@ -47,7 +49,7 @@ func ErrTransformTypeNotSupported(transformType TransformType) error {
 
 var ErrEmptySearchPattern = errors.New("search pattern string should not be empty")
 
-func CheckPartitionSize(partitionSize, totalRows int) error {
+func checkPartitionSize(partitionSize, totalRows int) error {
 	if partitionSize > totalRows {
 		return ErrPartitionSizeTooLarge(partitionSize, totalRows)
 	}
