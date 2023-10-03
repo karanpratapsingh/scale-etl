@@ -57,7 +57,7 @@ func (pt Partitioner) PartitionFile(partitionSize int) (err error) {
 	return nil
 }
 
-func (pt Partitioner) LoadPartitions() (chan Partition, int) {
+func (pt Partitioner) StreamPartitions() (chan Partition, int) {
 	partitions := pt.GetPartitionsInfo().Partitions
 	totalPartitions := len(partitions)
 
