@@ -8,7 +8,11 @@ import (
 var ErrUnexpectedNonHeaderRow = errors.New("unexpected non-header row")
 
 func ErrPartitionsNotFound(err error) error {
-	return fmt.Errorf("partitions not found, make sure to run the partition command first.\n%v", err)
+	return fmt.Errorf("partitions not found, make sure to run the partition command first\n%v", err)
+}
+
+func ErrBatchesNotFound(err error) error {
+	return fmt.Errorf("batches not found, make sure to run the transform command first\n%v", err)
 }
 
 func ErrFileNotFound(path string) error {
@@ -48,6 +52,10 @@ func ErrTransformTypeNotSupported(transformType TransformType) error {
 }
 
 var ErrEmptySearchPattern = errors.New("search pattern string should not be empty")
+
+func ErrSegmentLoadFailed(segmentPath string, err error) error {
+	return fmt.Errorf("failed to load segment %s: %v", segmentPath, err)
+}
 
 func checkPartitionSize(partitionSize, totalRows int) error {
 	if partitionSize > totalRows {

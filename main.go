@@ -80,7 +80,7 @@ func main() {
 			},
 			{
 				Name:  "search",
-				Usage: "searches partitions for a pattern and outputs results",
+				Usage: "searches partitions for a pattern",
 				Flags: internal.SearchCommandFlags,
 				Action: func(ctx *cli.Context) error {
 					pattern := ctx.String("pattern")
@@ -107,8 +107,23 @@ func main() {
 				},
 			},
 			{
+				Name:  "load",
+				Usage: "load transformed items concurrently",
+				Flags: internal.LoaderCommandFlags,
+				Action: func(ctx *cli.Context) error {
+					filePath := ctx.String("file-path")
+					outputDir := ctx.String("output-dir")
+					poolSize := ctx.Int("pool-size")
+					scriptPath := ctx.String("script-path")
+
+					var loader = internal.NewLoader(filePath, scriptPath, outputDir)
+
+					return loader.LoadSegments(poolSize)
+				},
+			},
+			{
 				Name:  "clean",
-				Usage: "clean partitions directory",
+				Usage: "clean partitions file info",
 				Flags: internal.CleanCommandFlags,
 				Action: func(ctx *cli.Context) error {
 					filePath := ctx.String("file-path")

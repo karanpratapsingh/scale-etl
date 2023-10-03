@@ -73,3 +73,18 @@ func ConcatenateArrays[T any](arrays ...[]T) []T {
 
 	return concatenated
 }
+
+func chunk[T any](items []T, size int) [][]T {
+	var chunks [][]T
+	N := len(items)
+
+	for i := 0; i < N; i += size {
+		end := i + size
+		if end > N {
+			end = N
+		}
+		chunks = append(chunks, items[i:end])
+	}
+
+	return chunks
+}

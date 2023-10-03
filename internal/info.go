@@ -57,3 +57,7 @@ func printPartitionInfo(totalPartitions, partitionSize int) {
 func printSearchInfo(pattern, outputPath string) {
 	fmt.Printf("Pattern: %s, Output: %s\n", pattern, outputPath)
 }
+
+func printLoaderInfo(poolSize int, scriptPath string) {
+	fmt.Printf("Pool size: %d, Script: %s\n", poolSize, scriptPath)
+}

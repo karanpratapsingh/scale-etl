@@ -41,3 +41,17 @@ func pathExists(path string) bool {
 
 	return true
 }
+
+func getFilesInDir(file *os.File) []string {
+	// Edge case: Readdirnames doesn't distinguish between files and directories
+	dirnames, err := file.Readdirnames(-1)
+	if err != nil {
+		panic(err)
+	}
+
+	return dirnames
+}
+
+func joinPaths(paths ...string) string {
+	return strings.Join(paths, "/")
+}

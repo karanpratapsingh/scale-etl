@@ -19,7 +19,7 @@ var LoaderCommandFlags = []cli.Flag{
 	filePathFlag,
 	outputDirFlag,
 	poolSizeFlag,
-	commandFlag,
+	scriptPathFlag,
 }
 
 var CleanCommandFlags = partitionerFlags
@@ -129,10 +129,10 @@ var poolSizeFlag = &cli.IntFlag{
 	Usage:    "Request pool size",
 }
 
-var commandFlag = &cli.StringFlag{
-	Name:     "command",
+var scriptPathFlag = &cli.StringFlag{
+	Name:     "script-path",
 	Required: true,
-	Usage:    "command executed for each segment",
+	Usage:    "script to be executed for each segment",
 }
 
 var outputDirFlag = &cli.StringFlag{

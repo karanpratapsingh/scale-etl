@@ -15,7 +15,7 @@ type Output struct {
 func NewOutput(filePath string, outputDir string) Output {
 	filename := getFileName(filePath)
 	hashedFilename := generateHash(filename)
-	outputPath := fmt.Sprintf("%s/%s", outputDir, hashedFilename)
+	outputPath := joinPaths(outputDir, hashedFilename)
 	counter := NewCounter(0)
 
 	return Output{outputPath, counter}
