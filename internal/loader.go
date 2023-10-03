@@ -51,7 +51,7 @@ func (l Loader) LoadSegments(poolSize int) error {
 
 func (l Loader) LoadSegment(batchPath, segmentPath string) {
 	cmd := exec.Command(l.scriptPath, joinPaths(l.outputPath, batchPath, segmentPath))
-	fmt.Println(cmd)
+
 	if err := cmd.Run(); err != nil {
 		fmt.Println(ErrSegmentLoadFailed(segmentPath, err))
 	}
