@@ -8,7 +8,7 @@ search:
 	go run main.go search --file-path samples/sample_10m.csv --segment-size 10000 --pattern abc
 
 load:
-	go run main.go load --file-path samples/sample_10m.csv --pool-size 50 --script-path ./sample_load_script.sh
+	go run main.go load --file-path samples/sample_10m.csv --pool-size 50 --script-path ./scripts/sample_load_script.sh
 
 clean:
 	go run main.go clean --file-path samples/sample_10m.csv
