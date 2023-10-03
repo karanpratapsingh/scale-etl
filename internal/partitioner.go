@@ -58,11 +58,18 @@ func (pt Partitioner) LoadPartitions() (chan string, int) {
 	return partitions, totalPartitions
 }
 
+func (pt Partitioner) CleanPartitions() error {
+	err := os.RemoveAll(pt.partitionPath)
+	if err == nil {
+		fmt.Println("Cleaned partitions directory:", pt.partitionPath)
+	}
+	return err
+}
+
 func (pt Partitioner) getPartitions() []string {
 	file, err := os.Open(pt.partitionPath)
 	if err != nil {
-		fmt.Println("Partitions not found, make sure to run the partition command first.")
-		panic(err)
+		panic(ErrPartitionsNotFound(err))
 	}
 	defer file.Close()
 
@@ -137,12 +144,4 @@ func (pt Partitioner) getPartitionFile(partition string) *os.File {
 	}
 
 	return file
-}
-
-func (pt Partitioner) CleanPartitions() error {
-	err := os.RemoveAll(pt.partitionPath)
-	if err == nil {
-		fmt.Println("Cleaned partitions directory:", pt.partitionPath)
-	}
-	return err
 }

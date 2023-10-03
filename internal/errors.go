@@ -5,6 +5,10 @@ import (
 	"fmt"
 )
 
+func ErrPartitionsNotFound(err error) error {
+	return fmt.Errorf("partitions not found, make sure to run the partition command first.\n%v", err)
+}
+
 func ErrFileNotFound(path string) error {
 	return fmt.Errorf("file %s not found", path)
 }
