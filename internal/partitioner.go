@@ -25,10 +25,6 @@ type Partitioner struct {
 }
 
 func NewPartitioner(filePath string, partitionDir string) Partitioner {
-	if !pathExists(filePath) {
-		panic(ErrFileNotFound(filePath))
-	}
-
 	makeDirectory(partitionDir)
 
 	filename := getFileName(filePath)

@@ -34,11 +34,7 @@ var transformSearchCommonFlags = append(
 )
 
 var partitionerFlags = []cli.Flag{
-	&cli.StringFlag{
-		Name:     "file-path",
-		Required: true,
-		Usage:    "File path",
-	},
+	filePathFlag,
 	&cli.StringFlag{
 		Name:  "partition-dir",
 		Value: "partitions",
@@ -50,6 +46,12 @@ var filePathFlag = &cli.StringFlag{
 	Name:     "file-path",
 	Required: true,
 	Usage:    "File path",
+	Action: func(_ *cli.Context, filePath string) error {
+		if !pathExists(filePath) {
+			return ErrFileNotFound(filePath)
+		}
+		return nil
+	},
 }
 
 var partitionSizeFlag = &cli.IntFlag{
@@ -133,6 +135,12 @@ var scriptPathFlag = &cli.StringFlag{
 	Name:     "script-path",
 	Required: true,
 	Usage:    "script to be executed for each segment",
+	Action: func(_ *cli.Context, scriptPath string) error {
+		if !pathExists(scriptPath) {
+			return ErrFileNotFound(scriptPath)
+		}
+		return nil
+	},
 }
 
 var outputDirFlag = &cli.StringFlag{
