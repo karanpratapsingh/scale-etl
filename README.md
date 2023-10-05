@@ -2,10 +2,14 @@
 
 ETL CLI for billion row CSV file...TODO
 
+TODO: Paper link
+
 ![system](docs/system.png)
 
 ## Benchmarks
 TODO
+
+add a graph for time taken for each command (depicts the non-linear increase in time)
 
 ## Commands
 TODO
@@ -47,7 +51,7 @@ $ todo_name search --file-path samples/sample_10m.csv --segment-size 10000 --pat
 
 ### Load
 TODO
-
+not specific to any data store
 ![loader](docs/loader.png)
 
 **Example**
