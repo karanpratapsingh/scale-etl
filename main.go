@@ -41,7 +41,7 @@ func main() {
 					transformType := internal.TransformType(ctx.String("transform-type"))
 					outputDir := ctx.String("output-dir")
 					schemaPath := ctx.String("schema-path")
-					delimiter := []rune(ctx.String("delimiter"))[0]
+					delimiter := internal.ParseRune(ctx.String("delimiter"))
 
 					var partitioner = internal.NewPartitioner(filePath, partitionDir)
 
@@ -90,7 +90,7 @@ func main() {
 					batchSize := ctx.Int("batch-size")
 					segmentSize := ctx.Int("segment-size")
 					schemaPath := ctx.String("schema-path")
-					delimiter := []rune(ctx.String("delimiter"))[0]
+					delimiter := internal.ParseRune(ctx.String("delimiter"))
 
 					var schema = internal.NewSchema(schemaPath)
 

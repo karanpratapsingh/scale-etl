@@ -88,3 +88,7 @@ func chunk[T any](items []T, size int) [][]T {
 
 	return chunks
 }
+
+func ParseRune(str string) rune {
+	return []rune(str)[0]
+}
