@@ -88,13 +88,3 @@ Generated sample data
 
 ## TODO
 - Impl regex search?
-
-## Future scope
-- Remove a column.
-- Derive a column from existing column.
-- DLQ with backoff on load failed.
-
-## Challenges
-- In memory partitions
-- Line widths to seek in file for streaming!
-- Line by line read and load becomes a bottleneck as each data store has it's limits (eg. dynamo db)

@@ -98,9 +98,12 @@ func main() {
 					partitions, totalPartitions := partitioner.StreamPartitions()
 
 					var processor = internal.NewProcessor(partitioner, schema, batchSize, segmentSize, delimiter)
-					var searcher = internal.NewSearcher(schema, pattern, outputPath)
 
+					totalBatches := processor.CountBatches(totalPartitions)
+					internal.PrintBatchInfo(totalBatches, batchSize)
 					internal.PrintSegmentInfo(segmentSize)
+
+					var searcher = internal.NewSearcher(schema, pattern, outputPath)
 
 					processor.ProcessPartitions(partitions, totalPartitions, searcher)
 					return searcher.Cleanup()
