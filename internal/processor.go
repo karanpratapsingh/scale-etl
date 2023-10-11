@@ -97,7 +97,7 @@ func (p Processor) processPartition(batchNo int, partitionNo int, partition Part
 			panic(ErrUnexpectedNonHeaderRow)
 		}
 
-		fmt.Printf("skipping header %s\n", header)
+		fmt.Printf("Skipping header %s\n", header)
 	}
 
 	for {
