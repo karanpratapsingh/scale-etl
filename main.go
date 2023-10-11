@@ -42,6 +42,7 @@ func main() {
 					outputDir := ctx.String("output-dir")
 					schemaPath := ctx.String("schema-path")
 					delimiter := internal.ParseRune(ctx.String("delimiter"))
+					noHeader := ctx.Bool("no-header")
 
 					var partitioner = internal.NewPartitioner(filePath, partitionDir)
 
@@ -64,7 +65,7 @@ func main() {
 						return err
 					}
 
-					var processor = internal.NewProcessor(partitioner, schema, batchSize, segmentSize, delimiter)
+					var processor = internal.NewProcessor(partitioner, schema, batchSize, segmentSize, delimiter, noHeader)
 
 					totalBatches := processor.CountBatches(totalPartitions)
 					internal.PrintBatchInfo(totalBatches, batchSize)
@@ -91,13 +92,14 @@ func main() {
 					segmentSize := ctx.Int("segment-size")
 					schemaPath := ctx.String("schema-path")
 					delimiter := internal.ParseRune(ctx.String("delimiter"))
-
+					noHeader := ctx.Bool("no-header")
+					
 					var schema = internal.NewSchema(schemaPath)
 
 					var partitioner = internal.NewPartitioner(filePath, partitionDir)
 					partitions, totalPartitions := partitioner.StreamPartitions()
 
-					var processor = internal.NewProcessor(partitioner, schema, batchSize, segmentSize, delimiter)
+					var processor = internal.NewProcessor(partitioner, schema, batchSize, segmentSize, delimiter, noHeader)
 
 					totalBatches := processor.CountBatches(totalPartitions)
 					internal.PrintBatchInfo(totalBatches, batchSize)

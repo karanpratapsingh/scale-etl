@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-var ErrUnexpectedNonHeaderRow = errors.New("unexpected non-header row")
+var ErrUnexpectedNonHeaderRow = errors.New("unexpected non-header row, make sure to use no-header flag if the csv does not have a header")
 
 func ErrPartitionsNotFound(err error) error {
 	return fmt.Errorf("partitions not found, make sure to run the partition command first\n%v", err)

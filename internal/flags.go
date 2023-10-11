@@ -31,6 +31,7 @@ var transformSearchCommonFlags = append(
 	),
 	schemaPathFlag,
 	delimiterFlag,
+	noHeaderFlag,
 )
 
 var partitionerFlags = []cli.Flag{
@@ -123,6 +124,12 @@ var delimiterFlag = &cli.StringFlag{
 	Name:  "delimiter",
 	Value: ",",
 	Usage: "Delimiter",
+}
+
+var noHeaderFlag = &cli.BoolFlag{
+	Name:  "no-header",
+	Value: false,
+	Usage: "No header present in the csv",
 }
 
 var poolSizeFlag = &cli.IntFlag{

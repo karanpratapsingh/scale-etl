@@ -18,6 +18,7 @@ type Processor struct {
 	batchSize   int
 	segmentSize int
 	delimiter   rune
+	noHeader    bool
 }
 
 type BatchProcessor interface {
@@ -29,9 +30,9 @@ type SegmentProcessor interface {
 	ProcessSegment(batchNo int, rows []Row)
 }
 
-func NewProcessor(partitioner Partitioner, schema Schema, batchSize int, segmentSize int, delimiter rune) Processor {
+func NewProcessor(partitioner Partitioner, schema Schema, batchSize int, segmentSize int, delimiter rune, noHeader bool) Processor {
 	var wg sync.WaitGroup
-	return Processor{partitioner, &wg, schema, batchSize, segmentSize, delimiter}
+	return Processor{partitioner, &wg, schema, batchSize, segmentSize, delimiter, noHeader}
 }
 
 func (p *Processor) ProcessPartitions(partitions chan Partition, totalPartitions int, batchProcessor BatchProcessor) {
@@ -84,8 +85,8 @@ func (p Processor) processPartition(batchNo int, partitionNo int, partition Part
 
 	var rows []Row
 
-	// Skip csv header from first partition
-	if partitionNo == 1 {
+	// Skip csv header from first partition (if present)
+	if !p.noHeader && partitionNo == 1 {
 		header, err := reader.Read()
 		if err != nil {
 			panic(err)
