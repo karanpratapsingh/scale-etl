@@ -4,7 +4,7 @@ ETL CLI for billion row CSV file...TODO
 
 TODO: Paper link
 
-![system](docs/system.png)
+![system](docs/diagrams/system.png)
 
 ## Benchmarks
 TODO
@@ -19,7 +19,7 @@ _Note: use `todo_name -h` for list of all the commands._
 ### Partition
 TODO
 
-![partitioner](docs/partitioner.png)
+![partitioner](docs/diagrams/partitioner.png)
 
 **Example**
 
@@ -30,7 +30,7 @@ $ todo_name partition --file-path samples/sample_10m.csv --partition-size 100000
 ### Transform
 TODO
 
-![transformer](docs/transformer.png)
+![transformer](docs/diagrams/transformer.png)
 
 **Example**
 
@@ -41,7 +41,7 @@ $ todo_name transform --file-path samples/sample_10m.csv --segment-size 10000
 ### Search
 TODO
 
-![searcher](docs/searcher.png)
+![search-interface](docs/diagrams/search-interface.png)
 
 **Example**
 
@@ -52,7 +52,7 @@ $ todo_name search --file-path samples/sample_10m.csv --segment-size 10000 --pat
 ### Load
 TODO
 not specific to any data store
-![loader](docs/loader.png)
+![loader](docs/diagrams/loader.png)
 
 **Example**
 

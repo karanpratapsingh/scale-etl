@@ -2,3 +2,4 @@ bin
 partitions
 output
 *.csv
+.DS_Store
