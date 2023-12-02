@@ -49,13 +49,13 @@ Partition size (10k for 100k), (100k for 1m-10m), (1m for 100m/1b)
 
 **Benchmark** (with non-linear trend graph)
 
-| size | time          | batch size | segment size |
-| ---- | ------------- | ---------- | ------------ |
-| 100k | 14.083667ms   | 10         | 10000        |
-| 1m   | 86.953584ms   | 10         | 10000        |
-| 10m  | 821.929875ms  | 20         | 10000        |
-| 100m | 6.751803375s  | 20         | 100000       |
-| 1b   | 70.230209375s | 20         | 100000       |
+| size | batch size | segment size | time       |
+| ---- | ---------- | ------------ | ---------- |
+| 100k | 10         | 10000        | 14.0836ms  |
+| 1m   | 10         | 10000        | 86.9535ms  |
+| 10m  | 20         | 10000        | 821.9298ms |
+| 100m | 20         | 100000       | 6.7518s    |
+| 1b   | 20         | 100000       | 70.2302s   |
 
 | size | time     | batch size | segment size |
 | ---- | -------- | ---------- | ------------ |
@@ -71,14 +71,13 @@ Partition size (10k for 100k), (100k for 1m-10m), (1m for 100m/1b)
 
 **Benchmark** (with non-linear trend graph)
 
-TODO: after regexp
-| size | time |
-| ---- | ------------- |
-| 100k | |
-| 1m | |
-| 10m | |
-| 100m | |
-| 1b | |
+| size | segment size | time       |
+| ---- | ------------ | ---------- |
+| 100k | 10000        | 12.1287ms  |
+| 1m   | 10000        | 96.2360ms  |
+| 10m  | 10000        | 541.4265ms |
+| 100m | 100000       | 4.7879s    |
+| 1b   | 100000       | 48.6179s   |
 
 ### Load
 
@@ -105,3 +104,47 @@ https://www.reddit.com/r/cpp/comments/g7aflx/update_towards_a_fast_singlethreade
 - DLQ with backoff on load failed.
 
 ## Conclusion
+
+## Single threaded (Go)
+
+### Transform
+
+| size | time       |
+| ---- | ---------- |
+| 100k | 37.5163ms  |
+| 1m   | 266.6583ms |
+| 10m  | 2.8439s    |
+| 100m | 14.1503s   |
+| 1b   | 108.2863s  |
+
+### Search
+
+| size | time       |
+| ---- | ---------- |
+| 100k | 28.5316ms  |
+| 1m   | 190.7396ms |
+| 10m  | 1.9537s    |
+| 100m | 12.3020s   |
+| 1b   | 78.9591s   |
+
+## Single threaded (Pandas)
+
+### Transform
+
+| size | time |
+| ---- | ---- |
+| 100k |      |
+| 1m   |      |
+| 10m  |      |
+| 100m |      |
+| 1b   |      |
+
+### Search
+
+| size | time |
+| ---- | ---- |
+| 100k |      |
+| 1m   |      |
+| 10m  |      |
+| 100m |      |
+| 1b   |      |
