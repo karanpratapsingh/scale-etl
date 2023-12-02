@@ -71,8 +71,7 @@ $ todo_name clean --file-path samples/sample_10m.csv
 
 ## Development
 
-It's a standard Go CLI application, checkout the makefile for
-Generate sample test files using the `scripts/generate_sample_data.go`
+It's a standard Go CLI application, checkout the `Makefile` for available commands. Generate sample test files using the `scripts/generate_sample_data.go`
 
 ```sh
 $ make generate_sample_data
@@ -85,6 +84,3 @@ Generated sample data
 2.3G    samples/sample_100m.csv
  23G    samples/sample_1b.csv
 ```
-
-## TODO
-- Impl regex search?

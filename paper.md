@@ -129,22 +129,77 @@ https://www.reddit.com/r/cpp/comments/g7aflx/update_towards_a_fast_singlethreade
 
 ## Single threaded (Pandas)
 
+```python
+old_values = []
+new_values = []
+
+results = [
+    (
+        round(((old - new) / old) * 100, 2),  # Percentage Improvement
+        round(old / new, 2)  # Speedup (Times)
+    )
+    for old, new in zip(old_values, new_values)
+]
+
+for i, (percentage_improvement, speedup) in enumerate(results, 1):
+    print(f"Value {i}:")
+    print(f"  Percentage Improvement: {percentage_improvement}%")
+    print(f"  Speedup (Times): {speedup}\n")
+
+```
+
+### Partition
+
+| size | time      |
+| ---- | --------- |
+| 100k | 0.0347s   |
+| 1m   | 0.3161s   |
+| 10m  | 3.0200s   |
+| 100m | 41.2236s  |
+| 1b   | 462.6593s |
+
+| Size | Percentage Improvement | Speedup (Times) |
+| ---- | ---------------------- | --------------- |
+| 100k | 85.61%                 | 6.94            |
+| 1m   | 83.99%                 | 6.26            |
+| 10m  | 86.78%                 | 7.56            |
+| 100m | 90.69%                 | 10.72           |
+| 1b   | 91.28%                 | 11.52           |
+
 ### Transform
 
-| size | time |
-| ---- | ---- |
-| 100k |      |
-| 1m   |      |
-| 10m  |      |
-| 100m |      |
-| 1b   |      |
+samples/sample_1b.csv:
+
+| size | time     |
+| ---- | -------- |
+| 100k | 0.1048s  |
+| 1m   | 0.7894s  |
+| 10m  | 7.9503s  |
+| 100m | 91.2204s |
+| 1b   | 988.845s |
+
+| Size | Percentage Improvement | Speedup (Times) |
+| ---- | ---------------------- | --------------- |
+| 100k | 98.57%                 | 69.87           |
+| 1m   | 89.01%                 | 9.09            |
+| 10m  | 89.68%                 | 9.67            |
+| 100m | 92.59%                 | 13.50           |
+| 1b   | 92.92%                 | 14.06           |
 
 ### Search
 
-| size | time |
-| ---- | ---- |
-| 100k |      |
-| 1m   |      |
-| 10m  |      |
-| 100m |      |
-| 1b   |      |
+| size | time       |
+| ---- | ---------- |
+| 100k | 0.1212s    |
+| 1m   | 1.1510s    |
+| 10m  | 11.5798s   |
+| 100m | 146.9870s  |
+| 1b   | 1492.5549s |
+
+| Size | Percentage Improvement | Speedup (Times) |
+| ---- | ---------------------- | --------------- |
+| 100k | 99.01%                 | 100.00          |
+| 1m   | 91.63%                 | 11.98           |
+| 10m  | 95.33%                 | 21.41           |
+| 100m | 96.73%                 | 30.72           |
+| 1b   | 96.75%                 | 30.68           |
