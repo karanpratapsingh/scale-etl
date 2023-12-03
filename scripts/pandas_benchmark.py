@@ -14,6 +14,7 @@ def partition_benchmark(input_file: str, partition_size: int):
     total_rows = len(df)
     num_partitions = (total_rows + partition_size - 1) // partition_size
 
+    os.makedirs("output", exist_ok=True)
     partition_manifest = {"total_rows": total_rows, "partitions": []}
 
     def get_partition_points(start_row, end_row):

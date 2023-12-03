@@ -7,16 +7,26 @@ TODO: Paper link
 ![system](docs/diagrams/system.png)
 
 ## Benchmarks
+
 TODO
 
 add a graph for time taken for each command (depicts the non-linear increase in time)
 
+```sh
+$ python3.12 -m venv .venv
+$ source .venv/bin/activate
+$ pip install pandas
+$ python scripts/pandas_benchmark.py
+```
+
 ## Commands
+
 TODO
 
 _Note: use `todo_name -h` for list of all the commands._
 
 ### Partition
+
 TODO
 
 ![partitioner](docs/diagrams/partitioner.png)
@@ -28,6 +38,7 @@ $ todo_name partition --file-path samples/sample_10m.csv --partition-size 100000
 ```
 
 ### Transform
+
 TODO
 
 ![transformer](docs/diagrams/transformer.png)
@@ -39,6 +50,7 @@ $ todo_name transform --file-path samples/sample_10m.csv --segment-size 10000
 ```
 
 ### Search
+
 TODO
 
 ![search-interface](docs/diagrams/search-interface.png)
@@ -50,6 +62,7 @@ $ todo_name search --file-path samples/sample_10m.csv --segment-size 10000 --pat
 ```
 
 ### Load
+
 TODO
 not specific to any data store
 ![loader](docs/diagrams/loader.png)
@@ -61,6 +74,7 @@ $ todo_name load --file-path samples/sample_10m.csv --pool-size 50 --script-path
 ```
 
 ### Clean
+
 TODO
 
 **Example**

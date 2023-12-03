@@ -34,3 +34,6 @@ generate_sample_data:
 
 postgres:
 	docker run -itd -e POSTGRES_USER=user -e POSTGRES_DB=db -e POSTGRES_PASSWORD=pass -p 5432:5432 postgres:16
+
+benchmark_pandas:
+	python scripts/pandas_benchmark.py

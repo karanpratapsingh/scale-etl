@@ -3,3 +3,4 @@ partitions
 output
 *.csv
 .DS_Store
+.venv
