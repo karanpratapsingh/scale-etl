@@ -23,28 +23,30 @@ func NewLoader(filePath string, scriptPath string, outputDir string) Loader {
 func (l Loader) LoadSegments(poolSize int) error {
 	var wg sync.WaitGroup
 
-	batchPaths := l.getBatchPaths()
-	totalBatches := len(batchPaths)
+	segmentPaths := l.getFullSegmentPaths()
+	totalSegmentPaths := len(segmentPaths)
 
-	printLoaderInfo(poolSize, totalBatches, l.scriptPath)
+	if poolSize > totalSegmentPaths {
+		panic(ErrPoolSizeTooLarge(poolSize, totalSegmentPaths))
+	}
+
+	segmentPathBatches := createBatches(segmentPaths, poolSize)
+	totalBatches := len(segmentPathBatches)
+
+	printLoaderInfo(poolSize, totalSegmentPaths, totalBatches, l.scriptPath)
 
 	MeasureExecTime("Loading complete", func() {
-		for batchNo, batchPath := range l.getBatchPaths() {
-			segmentChunks := chunk(l.getSegmentPaths(batchPath), poolSize)
-
+		for batchNo, segmentPathBatch := range segmentPathBatches {
 			MeasureExecTime(fmt.Sprintf("Loaded batch %d", batchNo+1), func() {
-				for _, segmentChunk := range segmentChunks {
-					for _, segmentPath := range segmentChunk {
+				for _, segmentPath := range segmentPathBatch {
+					wg.Add(1)
+					go func(wg *sync.WaitGroup, segmentPath string) {
+						defer wg.Done()
 
-						wg.Add(1)
-						go func(wg *sync.WaitGroup, batchPath string, segmentPath string) {
-							defer wg.Done()
-
-							l.LoadSegment(batchPath, segmentPath)
-						}(&wg, batchPath, segmentPath)
-					}
-					wg.Wait() // Wait for each chunk to finish
+						l.LoadSegment(segmentPath)
+					}(&wg, segmentPath)
 				}
+				wg.Wait() // Wait for each batch to finish
 			})
 		}
 	})
@@ -52,8 +54,23 @@ func (l Loader) LoadSegments(poolSize int) error {
 	return nil
 }
 
-func (l Loader) LoadSegment(batchPath, segmentPath string) {
-	cmd := exec.Command(l.scriptPath, joinPaths(l.outputPath, batchPath, segmentPath))
+func (l Loader) getFullSegmentPaths() []string {
+	batchPaths := l.getBatchPaths()
+
+	var segmentPaths []string
+
+	for _, batchPath := range batchPaths {
+		for _, segmentPath := range l.getSegmentPaths(batchPath) {
+			fullPath := fmt.Sprintf("%s/%s", batchPath, segmentPath)
+			segmentPaths = append(segmentPaths, fullPath)
+		}
+	}
+
+	return segmentPaths
+}
+
+func (l Loader) LoadSegment(segmentPath string) {
+	cmd := exec.Command(l.scriptPath, joinPaths(l.outputPath, segmentPath))
 
 	if err := cmd.Run(); err != nil {
 		fmt.Println(ErrSegmentLoadFailed(segmentPath, err))

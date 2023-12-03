@@ -50,6 +50,6 @@ func printSearchInfo(pattern, outputPath string) {
 	fmt.Printf("Pattern: %s, Output: %s\n", pattern, outputPath)
 }
 
-func printLoaderInfo(poolSize, totalBatches int, scriptPath string) {
-	fmt.Printf("Pool size: %d, Batches: %d, Script: %s\n", poolSize, totalBatches, scriptPath)
+func printLoaderInfo(poolSize, totalSegments, totalBatches int, scriptPath string) {
+	fmt.Printf("Pool size: %d, Segments: %d, Batches: %d, Script: %s\n", poolSize, totalSegments, totalBatches, scriptPath)
 }

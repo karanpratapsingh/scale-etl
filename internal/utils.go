@@ -82,8 +82,8 @@ func ConcatenateArrays[T any](arrays ...[]T) []T {
 	return concatenated
 }
 
-func chunk[T any](items []T, size int) [][]T {
-	var chunks [][]T
+func createBatches[T int | string](items []T, size int) [][]T {
+	var batches [][]T
 	N := len(items)
 
 	for i := 0; i < N; i += size {
@@ -91,10 +91,10 @@ func chunk[T any](items []T, size int) [][]T {
 		if end > N {
 			end = N
 		}
-		chunks = append(chunks, items[i:end])
+		batches = append(batches, items[i:end])
 	}
 
-	return chunks
+	return batches
 }
 
 func ParseRune(str string) rune {
