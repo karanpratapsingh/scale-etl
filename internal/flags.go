@@ -136,6 +136,13 @@ var poolSizeFlag = &cli.IntFlag{
 	Name:     "pool-size",
 	Required: true,
 	Usage:    "Request pool size",
+	Action: func(_ *cli.Context, poolSize int) error {
+		if poolSize < 1 {
+			return ErrInsufficientPoolSize
+		}
+
+		return nil
+	},
 }
 
 var scriptPathFlag = &cli.StringFlag{

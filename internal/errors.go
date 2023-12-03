@@ -23,19 +23,21 @@ func ErrReadingFile(err error) error {
 	return fmt.Errorf("error reading config file: %v", err)
 }
 
+var ErrInsufficientPartitionSize = errors.New("partition size cannot be less than 1")
+
+func ErrPartitionSizeTooLarge(partitionSize, totalRows int) error {
+	return fmt.Errorf("partition size (%d) should be less than or equal to total number of rows (%d)", partitionSize, totalRows)
+}
+
 var ErrInsufficientBatchSize = errors.New("batch size cannot be less than 1")
 
 func ErrBatchSizeTooLarge(batchSize, totalPartitions int) error {
 	return fmt.Errorf("batch size (%d) should be less than total partitions (%d)", batchSize, totalPartitions)
 }
 
-var ErrInsufficientPartitionSize = errors.New("partition size cannot be less than 1")
-
 var ErrInsufficientSegmentSize = errors.New("segment size cannot be less than 1")
 
-func ErrPartitionSizeTooLarge(partitionSize, totalRows int) error {
-	return fmt.Errorf("partition size (%d) should be less than or equal to total number of rows (%d)", partitionSize, totalRows)
-}
+var ErrInsufficientPoolSize = errors.New("pool size cannot be less than 1")
 
 var ErrSchemaRequired = errors.New("schema definition is required")
 

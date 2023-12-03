@@ -23,7 +23,10 @@ func NewLoader(filePath string, scriptPath string, outputDir string) Loader {
 func (l Loader) LoadSegments(poolSize int) error {
 	var wg sync.WaitGroup
 
-	printLoaderInfo(poolSize, l.scriptPath)
+	batchPaths := l.getBatchPaths()
+	totalBatches := len(batchPaths)
+
+	printLoaderInfo(poolSize, totalBatches, l.scriptPath)
 
 	MeasureExecTime("Loading complete", func() {
 		for batchNo, batchPath := range l.getBatchPaths() {

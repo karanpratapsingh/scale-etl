@@ -111,7 +111,7 @@ if __name__ == "__main__":
     for i, (input_file, segment_size, partition_size) in enumerate(benchmarks):
         output_folder = f"output/{i}"
 
-        print(f"{input_file}:")
+        print(input_file)
         partition_benchmark(input_file, partition_size)
         transform_benchmark(input_file, output_folder, segment_size)
         search_benchmark(input_file, "output/matches.csv", "abc")

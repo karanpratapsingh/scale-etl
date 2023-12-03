@@ -32,7 +32,7 @@ generate_sample_data:
 	echo "Generated all sample data"
 	du -sh samples/*
 
-postgres:
+start_postgres:
 	docker run -itd -e POSTGRES_USER=user -e POSTGRES_DB=db -e POSTGRES_PASSWORD=pass -p 5432:5432 postgres:16
 
 benchmark_pandas:
