@@ -34,7 +34,7 @@ Partition size (10k for 100k), (100k for 1m-10m), (1m for 100m/1b)
 | 100k | 5.049708ms    | 10000          |
 | 1m   | 50.612875ms   | 100000         |
 | 10m  | 398.853792ms  | 100000         |
-| 100m | 3.844415084s  | 1000000        |
+| 100m | 3.839415084s  | 1000000        |
 | 1b   | 40.162212292s | 1000000        |
 
 | size | time     | partition size |
@@ -56,6 +56,8 @@ Partition size (10k for 100k), (100k for 1m-10m), (1m for 100m/1b)
 | 10m  | 20         | 10000        | 821.9298ms |
 | 100m | 20         | 100000       | 6.7518s    |
 | 1b   | 20         | 100000       | 70.2302s   |
+
+M3 Pro (32 GB):
 
 | size | time     | batch size | segment size |
 | ---- | -------- | ---------- | ------------ |
@@ -88,8 +90,6 @@ Partition size (10k for 100k), (100k for 1m-10m), (1m for 100m/1b)
 Below results are average of 5 runs for sample csv files of total rows ranging from 100 thousand to 1 Billion.
 
 The CLI tool was tested on <machine> with <memory> Memory and <cpu> CPU.
-
-https://www.reddit.com/r/cpp/comments/g7aflx/update_towards_a_fast_singlethreaded_csv_parser/
 
 ## Challenges
 
@@ -152,54 +152,52 @@ for i, (percentage_improvement, speedup) in enumerate(results, 1):
 
 | size | time      |
 | ---- | --------- |
-| 100k | 0.0347s   |
-| 1m   | 0.3161s   |
-| 10m  | 3.0200s   |
+| 100k | 34.7ms    |
+| 1m   | 316.1ms   |
+| 10m  | 3.020s    |
 | 100m | 41.2236s  |
 | 1b   | 462.6593s |
 
-| Size | Percentage Improvement | Speedup (Times) |
-| ---- | ---------------------- | --------------- |
-| 100k | 85.61%                 | 6.94            |
-| 1m   | 83.99%                 | 6.26            |
-| 10m  | 86.78%                 | 7.56            |
-| 100m | 90.69%                 | 10.72           |
-| 1b   | 91.28%                 | 11.52           |
+| Size | Speedup (Times) |
+| ---- | --------------- |
+| 100k | 6.94            |
+| 1m   | 6.26            |
+| 10m  | 7.56            |
+| 100m | 10.72           |
+| 1b   | 11.52           |
 
 ### Transform
 
-samples/sample_1b.csv:
-
 | size | time     |
 | ---- | -------- |
-| 100k | 0.1048s  |
-| 1m   | 0.7894s  |
+| 100k | 181.2ms  |
+| 1m   | 789.4ms  |
 | 10m  | 7.9503s  |
 | 100m | 91.2204s |
 | 1b   | 988.845s |
 
-| Size | Percentage Improvement | Speedup (Times) |
-| ---- | ---------------------- | --------------- |
-| 100k | 98.57%                 | 69.87           |
-| 1m   | 89.01%                 | 9.09            |
-| 10m  | 89.68%                 | 9.67            |
-| 100m | 92.59%                 | 13.50           |
-| 1b   | 92.92%                 | 14.06           |
+| Size | Improvement (Times) |
+| ---- | ------------------- |
+| 100k | 12.87               |
+| 1m   | 9.09                |
+| 10m  | 9.67                |
+| 100m | 13.50               |
+| 1b   | 14.06               |
 
 ### Search
 
 | size | time       |
 | ---- | ---------- |
-| 100k | 0.1212s    |
+| 100k | 212.7ms    |
 | 1m   | 1.1510s    |
 | 10m  | 11.5798s   |
 | 100m | 146.9870s  |
 | 1b   | 1492.5549s |
 
-| Size | Percentage Improvement | Speedup (Times) |
-| ---- | ---------------------- | --------------- |
-| 100k | 99.01%                 | 100.00          |
-| 1m   | 91.63%                 | 11.98           |
-| 10m  | 95.33%                 | 21.41           |
-| 100m | 96.73%                 | 30.72           |
-| 1b   | 96.75%                 | 30.68           |
+| Size | Improvement (Times) |
+| ---- | ------------------- |
+| 100k | 18.73               |
+| 1m   | 11.98               |
+| 10m  | 21.41               |
+| 100m | 30.72               |
+| 1b   | 30.68               |
