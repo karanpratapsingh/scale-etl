@@ -28,7 +28,7 @@ jobs:
 
       - name: Build
         run: |
-          GOARCH=${{ matrix.arch }} GOOS=${{ matrix.os }} go build -o ${{ env.NAME }}_${{ matrix.os }}_${{ matrix.arch }} ./path/to/your/app
+          GOARCH=${{ matrix.arch }} GOOS=${{ matrix.os }} go build -o ${{ env.NAME }}_${{ matrix.os }}_${{ matrix.arch }}
 
       - name: Archive artifacts
         uses: actions/upload-artifact@v2
