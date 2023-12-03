@@ -46,8 +46,8 @@ func main() {
 
 					var partitioner = internal.NewPartitioner(filePath, partitionDir)
 
-					partitionsInfo := partitioner.GetPartitionsInfo()
-					internal.PrintInputFileInfo(filePath, partitionsInfo.TotalRows)
+					partitionManifest := partitioner.GetPartitionManifest()
+					internal.PrintInputFileInfo(filePath, partitionManifest.TotalRows)
 
 					var schema = internal.NewSchema(schemaPath)
 
@@ -93,7 +93,7 @@ func main() {
 					schemaPath := ctx.String("schema-path")
 					delimiter := internal.ParseRune(ctx.String("delimiter"))
 					noHeader := ctx.Bool("no-header")
-					
+
 					var schema = internal.NewSchema(schemaPath)
 
 					var partitioner = internal.NewPartitioner(filePath, partitionDir)

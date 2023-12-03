@@ -8,9 +8,10 @@ import (
 	"os"
 )
 
-type PartitionInfo struct {
-	TotalRows  int         `json:"total_rows"`
-	Partitions []Partition `json:"partitions"`
+type PartitionManifest struct { // rename and add partition size
+	TotalRows     int         `json:"total_rows"`
+	PartitionSize int         `json:"partition_size"`
+	Partitions    []Partition `json:"partitions"`
 }
 
 type Partition struct {
@@ -19,9 +20,9 @@ type Partition struct {
 }
 
 type Partitioner struct {
-	filePath     string
-	filename     string
-	infoFilePath string
+	filePath         string
+	filename         string
+	manifestFilePath string
 }
 
 func NewPartitioner(filePath string, partitionDir string) Partitioner {
@@ -29,32 +30,32 @@ func NewPartitioner(filePath string, partitionDir string) Partitioner {
 
 	filename := getFileName(filePath)
 	hashedFilename := generateHash(filename)
-	infoFilePath := fmt.Sprintf("%s/%s.json", partitionDir, hashedFilename)
+	manifestFilePath := fmt.Sprintf("%s/%s.json", partitionDir, hashedFilename)
 
-	return Partitioner{filePath, filename, infoFilePath}
+	return Partitioner{filePath, filename, manifestFilePath}
 }
 
 func (pt Partitioner) PartitionFile(partitionSize int) (err error) {
 	MeasureExecTime("Partitioning complete", func() {
-		fmt.Printf("Writing partition info for %s at %s\n", pt.filename, pt.infoFilePath)
-		err = pt.createPartitions(partitionSize)
+		fmt.Printf("Writing partition manifest for %s at %s\n", pt.filename, pt.manifestFilePath)
+		err = pt.createPartitionManifest(partitionSize)
 	})
 
 	if err != nil {
 		return err
 	}
 
-	info := pt.GetPartitionsInfo()
-	totalPartitions := len(info.Partitions)
+	manifest := pt.GetPartitionManifest()
+	totalPartitions := len(manifest.Partitions)
 
-	PrintInputFileInfo(pt.filePath, info.TotalRows)
+	PrintInputFileInfo(pt.filePath, manifest.TotalRows)
 	printPartitionInfo(totalPartitions, partitionSize)
 
 	return nil
 }
 
 func (pt Partitioner) StreamPartitions() (chan Partition, int) {
-	partitions := pt.GetPartitionsInfo().Partitions
+	partitions := pt.GetPartitionManifest().Partitions
 	totalPartitions := len(partitions)
 
 	var partitionsChan = make(chan Partition)
@@ -70,29 +71,29 @@ func (pt Partitioner) StreamPartitions() (chan Partition, int) {
 }
 
 func (pt Partitioner) CleanPartitions() error {
-	err := os.RemoveAll(pt.infoFilePath)
+	err := os.RemoveAll(pt.manifestFilePath)
 	if err == nil {
-		fmt.Println("Cleaned partition info file:", pt.infoFilePath)
+		fmt.Println("Cleaned partition manifest file:", pt.manifestFilePath)
 	}
 	return err
 }
 
-func (pt Partitioner) GetPartitionsInfo() PartitionInfo {
-	file, err := os.Open(pt.infoFilePath)
+func (pt Partitioner) GetPartitionManifest() PartitionManifest {
+	file, err := os.Open(pt.manifestFilePath)
 	if err != nil {
 		panic(ErrPartitionsNotFound(err))
 	}
 	defer file.Close()
 
-	var partitionInfo PartitionInfo
-	if err := json.NewDecoder(file).Decode(&partitionInfo); err != nil {
+	var manifest PartitionManifest
+	if err := json.NewDecoder(file).Decode(&manifest); err != nil {
 		panic(err)
 	}
 
-	return partitionInfo
+	return manifest
 }
 
-func (pt Partitioner) createPartitions(partitionSize int) error {
+func (pt Partitioner) createPartitionManifest(partitionSize int) error {
 	file, err := os.Open(pt.filePath)
 	if err != nil {
 		return err
@@ -137,16 +138,16 @@ func (pt Partitioner) createPartitions(partitionSize int) error {
 		return err
 	}
 
-	return pt.writePartitionInfoFile(PartitionInfo{totalRows, partitions})
+	return pt.writePartitionManifestFile(PartitionManifest{totalRows, partitionSize, partitions})
 }
 
-func (pt Partitioner) writePartitionInfoFile(info PartitionInfo) error {
-	jsonData, err := json.Marshal(info)
+func (pt Partitioner) writePartitionManifestFile(manifest PartitionManifest) error {
+	jsonData, err := json.Marshal(manifest)
 	if err != nil {
 		return err
 	}
 
-	file, err := os.Create(pt.infoFilePath)
+	file, err := os.Create(pt.manifestFilePath)
 	if err != nil {
 		return err
 	}

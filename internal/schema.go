@@ -22,7 +22,7 @@ func NewSchema(schemaPath string) Schema {
 
 	var schema Schema
 
-	var yamlSchema struct { // YAML schema
+	var yamlSchema struct {
 		TableName string              `yaml:"table_name,omitempty"`
 		Key       string              `yaml:"key,omitempty"`
 		Columns   []map[string]string `yaml:"columns"`
