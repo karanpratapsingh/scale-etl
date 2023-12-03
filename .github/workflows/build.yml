@@ -27,11 +27,10 @@ jobs:
           go-version: 1.21
 
       - name: Build
-        run: |
-          GOARCH=${{ matrix.arch }} GOOS=${{ matrix.os }} go build -o ${{ env.NAME }}_${{ matrix.os }}_${{ matrix.arch }}
+        run: GOARCH=${{ matrix.arch }} GOOS=${{ matrix.os }} go build -o ${{ env.NAME }}-${{ matrix.os }}-${{ matrix.arch }}
 
       - name: Archive artifacts
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.NAME }}-${{ matrix.os }}-${{ matrix.arch }}
-          path: ${{ env.NAME }}_${{ matrix.os }}_${{ matrix.arch }}
+          path: ${{ env.NAME }}-${{ matrix.os }}-${{ matrix.arch }}
