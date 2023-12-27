@@ -72,7 +72,7 @@ $ scale-etl partition --file-path samples/sample_10m.csv --partition-size 100000
 
 **Benchmark**
 
-| Sample Size | Partition Size | Pandas    | CLI        | Improvement |
+| Sample Size | Partition Size | Pandas    | ScaleETL   | Improvement |
 | ----------- | -------------- | --------- | ---------- | ----------- |
 | 100k        | 10,000         | 34.7ms    | 5.0497ms   | 6.94x       |
 | 1m          | 10,000         | 316.1ms   | 50.6128ms  | 6.26x       |
@@ -122,7 +122,7 @@ $ scale-etl transform --file-path samples/sample_10m.csv --segment-size 10000
 
 **Benchmark**
 
-| Sample Size | Batch Size | Segment Size | Pandas   | CLI        | Improvement |
+| Sample Size | Batch Size | Segment Size | Pandas   | ScaleETL   | Improvement |
 | ----------- | ---------- | ------------ | -------- | ---------- | ----------- |
 | 100k        | 10         | 10,000       | 181.2ms  | 14.0836ms  | 12.87x      |
 | 1m          | 10         | 10,000       | 789.4ms  | 86.9535ms  | 9.09x       |
@@ -158,7 +158,7 @@ $ scale-etl search --file-path samples/sample_10m.csv --segment-size 10000 --pat
 
 **Benchmark**
 
-| Sample Size | Segment Size | Pandas     | CLI        | Improvement |
+| Sample Size | Segment Size | Pandas     | ScaleETL   | Improvement |
 | ----------- | ------------ | ---------- | ---------- | ----------- |
 | 100k        | 10,000       | 212.7ms    | 12.1287ms  | 18.73x      |
 | 1m          | 10,000       | 1.1510s    | 96.2360ms  | 11.98x      |
