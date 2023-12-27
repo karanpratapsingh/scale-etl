@@ -15,7 +15,7 @@ jobs:
         arch: [amd64, arm64]
 
     env:
-      NAME: etl
+      NAME: scale-etl
 
     steps:
       - name: Checkout code

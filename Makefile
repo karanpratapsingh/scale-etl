@@ -14,7 +14,7 @@ clean:
 	go run main.go clean --file-path samples/sample_10m.csv
 
 build:
-	go build -o bin/csv-etl main.go
+	go build -o bin/scale-etl main.go
 
 lint:
 	go fmt ./...

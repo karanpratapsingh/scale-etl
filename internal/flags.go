@@ -39,14 +39,14 @@ var partitionerFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:  "partition-dir",
 		Value: "partitions",
-		Usage: "Partition output dir",
+		Usage: "Output directory for partition manifest files",
 	},
 }
 
 var filePathFlag = &cli.StringFlag{
 	Name:     "file-path",
 	Required: true,
-	Usage:    "File path",
+	Usage:    "Input CSV file path",
 	Action: func(_ *cli.Context, filePath string) error {
 		if !pathExists(filePath) {
 			return ErrFileNotFound(filePath)
@@ -72,7 +72,7 @@ var batchAndSegmentSizeFlags = []cli.Flag{
 	&cli.IntFlag{
 		Name:  "batch-size",
 		Value: 5,
-		Usage: "Batch size",
+		Usage: "Number of partitions to be processed concurrently",
 		Action: func(_ *cli.Context, batchSize int) error {
 			if batchSize < 1 {
 				return ErrInsufficientBatchSize
@@ -84,7 +84,7 @@ var batchAndSegmentSizeFlags = []cli.Flag{
 	&cli.IntFlag{
 		Name:     "segment-size",
 		Required: true,
-		Usage:    "Segment size",
+		Usage:    "Size of segment each partition will be divided into",
 		Action: func(_ *cli.Context, segmentSize int) error {
 			if segmentSize < 1 {
 				return ErrInsufficientSegmentSize
@@ -110,32 +110,32 @@ var searchFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:  "output",
 		Value: "matches.csv",
-		Usage: "Output file path",
+		Usage: "Output CSV file path",
 	},
 }
 
 var transformTypeFlag = &cli.StringFlag{
 	Name:  "transform-type",
 	Value: "csv",
-	Usage: "Transform type",
+	Usage: "Output format of the transform",
 }
 
 var delimiterFlag = &cli.StringFlag{
 	Name:  "delimiter",
 	Value: ",",
-	Usage: "Delimiter",
+	Usage: "Delimiter character",
 }
 
 var noHeaderFlag = &cli.BoolFlag{
 	Name:  "no-header",
 	Value: false,
-	Usage: "No header present in the csv",
+	Usage: "CSV file does not have a header row",
 }
 
 var poolSizeFlag = &cli.IntFlag{
 	Name:     "pool-size",
 	Required: true,
-	Usage:    "Request pool size",
+	Usage:    "Number of concurrent calls of the specified script",
 	Action: func(_ *cli.Context, poolSize int) error {
 		if poolSize < 1 {
 			return ErrInsufficientPoolSize
@@ -148,7 +148,7 @@ var poolSizeFlag = &cli.IntFlag{
 var scriptPathFlag = &cli.StringFlag{
 	Name:     "script-path",
 	Required: true,
-	Usage:    "script to be executed for each segment",
+	Usage:    "Path of script to be executed for each segment",
 	Action: func(_ *cli.Context, scriptPath string) error {
 		if !pathExists(scriptPath) {
 			return ErrFileNotFound(scriptPath)
@@ -160,5 +160,5 @@ var scriptPathFlag = &cli.StringFlag{
 var outputDirFlag = &cli.StringFlag{
 	Name:  "output-dir",
 	Value: "output",
-	Usage: "Output dir",
+	Usage: "Output directory for transformed files",
 }

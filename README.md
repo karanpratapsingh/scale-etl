@@ -1,6 +1,6 @@
-# CSV ETL (TODO NAME)
+# ScaleETL
 
-ETL CLI for billion row CSV file...TODO
+Partition, Transform, Load, and Search large CSV files.
 
 ![system](docs/diagrams/system.png)
 
@@ -24,21 +24,25 @@ Generated sample data
  23G    samples/sample_1b.csv
 ```
 
+## Build
+
+`amd64` and `arm64` binaries are available for `linux`, `windows`, and `darwin` via the [build github action](https://github.com/karanpratapsingh/scale-etl/actions/workflows/build.yml).
+
 ## Features
 
-TODO
-
-_Note: use `todo_name -h` for list of all the commands._
+Benchmarks were done on Apple M2 CPU with 16 GB Memory. `scripts/pandas_benchmark.sh` has benchmark implementation for [pandas](https://pandas.pydata.org).
 
 ### Partition
 
-TODO
+Partition input CSV file into multiple smaller files.
 
 ![partitioner](docs/diagrams/partitioner.png)
 
 **Partition Manifest**
 
-```json
+The manifest includes information about how the CSV file is partitioned into smaller chunks, specifying the start and end buffer indices of each partition.
+
+```js
 {
   "total_rows": <int>,
   "partition_size": <int>,
@@ -49,10 +53,21 @@ TODO
 }
 ```
 
+**Usage**
+
+```sh
+$ scale-etl partition [command options] [arguments...]
+
+OPTIONS:
+   --file-path value       Input CSV file path
+   --partition-dir value   Output directory for partition manifest files (default: "partitions")
+   --partition-size value  Partition size (default: 0)
+```
+
 **Example**
 
 ```sh
-$ todo_name partition --file-path samples/sample_10m.csv --partition-size 100000
+$ scale-etl partition --file-path samples/sample_10m.csv --partition-size 100000
 ```
 
 **Benchmark**
@@ -67,11 +82,13 @@ $ todo_name partition --file-path samples/sample_10m.csv --partition-size 100000
 
 ### Transform
 
-TODO
+Transform partitions into a particular format (`dynamodb`, `parquet`, `json`, `csv`).
 
 ![transformer](docs/diagrams/transformer.png)
 
 **Schema**
+
+YAML structure represents a schema definition used by the transformer for a given CSV file. Optional fields such as `table_name`, `key` can be used in certain scenarios. For example, the `table_name` field is can for transform type `dynamodb`.
 
 ```yaml
 table_name: <str> [optional]
@@ -80,10 +97,27 @@ columns:
   - <name>: <type>
 ```
 
+**Usage**
+
+```sh
+$ scale-etl transform [command options] [arguments...]
+
+OPTIONS:
+   --file-path value       Input CSV file path
+   --partition-dir value   Output directory for partition manifest files (default: "partitions")
+   --batch-size value      Number of partitions to be processed concurrently (default: 5)
+   --segment-size value    Size of segment each partition will be divided into (default: 0)
+   --schema-path value     Schema file path (default: "schema.yaml")
+   --delimiter value       Delimiter character (default: ",")
+   --no-header             CSV file does not have a header row (default: false)
+   --transform-type value  Output format of the transform (default: "csv")
+   --output-dir value      Output directory for transformed files (default: "output")
+```
+
 **Example**
 
 ```sh
-$ todo_name transform --file-path samples/sample_10m.csv --segment-size 10000
+$ scale-etl transform --file-path samples/sample_10m.csv --segment-size 10000
 ```
 
 **Benchmark**
@@ -98,14 +132,28 @@ $ todo_name transform --file-path samples/sample_10m.csv --segment-size 10000
 
 ### Search
 
-TODO
+Searches partitions for a specific pattern.
 
 ![search-interface](docs/diagrams/search-interface.png)
+
+**Usage**
+
+```sh
+   --pattern value        Search pattern
+   --output value         Output CSV file path (default: "matches.csv")
+   --file-path value      Input CSV file path
+   --partition-dir value  Output directory for partition manifest files (default: "partitions")
+   --batch-size value     Number of partitions to be processed concurrently (default: 5)
+   --segment-size value   Size of segment each partition will be divided into (default: 0)
+   --schema-path value    Schema file path (default: "schema.yaml")
+   --delimiter value      Delimiter character (default: ",")
+   --no-header            CSV file does not have a header row (default: false)
+```
 
 **Example**
 
 ```sh
-$ todo_name search --file-path samples/sample_10m.csv --segment-size 10000 --pattern abc
+$ scale-etl search --file-path samples/sample_10m.csv --segment-size 10000 --pattern abc
 ```
 
 **Benchmark**
@@ -120,12 +168,26 @@ $ todo_name search --file-path samples/sample_10m.csv --segment-size 10000 --pat
 
 ### Load
 
+Load transformed segments concurrently.
+
 ![loader](docs/diagrams/loader.png)
+
+**Usage**
+
+```sh
+$ scale-etl load [command options] [arguments...]
+
+OPTIONS:
+   --file-path value    Input CSV file path
+   --output-dir value   Output directory for transformed files (default: "output")
+   --pool-size value    Number of concurrent calls of the specified script (default: 0)
+   --script-path value  Path of script to be executed for each segment
+```
 
 **Example**
 
 ```sh
-$ todo_name load --file-path samples/sample_10m.csv --pool-size 50 --script-path ./scripts/sample_load_script.sh
+$ scale-etl load --file-path samples/sample_10m.csv --pool-size 50 --script-path ./scripts/sample_load_script.sh
 ```
 
 **Benchmark**
@@ -142,6 +204,9 @@ Loader benchmark can be quite subjective as there are a lot of external factors 
 
 ## Future Scope
 
+Potential areas of future development and improvement:
+
+- In partitions streaming without reading the entire file and creating a partition manifest.
 - Remove, Add or Derive a column from an existing columns.
 - View/stream any partition within a specified range.
 - RESTful interface for all core features.

@@ -11,13 +11,13 @@ func main() {
 	defer internal.HandlePanic()
 
 	app := &cli.App{
-		Name:        "csv-etl",
-		Usage:       "partition, transform, and search large CSV files",
+		Name:        "scale-etl",
+		Usage:       "Partition, Transform, Load, and Search large CSV files",
 		Description: internal.Description,
 		Commands: []*cli.Command{
 			{
 				Name:  "partition",
-				Usage: "partition into multiple smaller files",
+				Usage: "Partition input CSV file into multiple smaller files",
 				Flags: internal.PartitionCommandFlags,
 				Action: func(ctx *cli.Context) error {
 					filePath := ctx.String("file-path")
@@ -31,7 +31,7 @@ func main() {
 			},
 			{
 				Name:  "transform",
-				Usage: "transform partitions to a particular format",
+				Usage: "Transform partitions into a particular format",
 				Flags: internal.TransformCommandFlags,
 				Action: func(ctx *cli.Context) error {
 					filePath := ctx.String("file-path")
@@ -81,7 +81,7 @@ func main() {
 			},
 			{
 				Name:  "search",
-				Usage: "searches partitions for a pattern",
+				Usage: "Searches partitions for a specific pattern",
 				Flags: internal.SearchCommandFlags,
 				Action: func(ctx *cli.Context) error {
 					pattern := ctx.String("pattern")
@@ -113,7 +113,7 @@ func main() {
 			},
 			{
 				Name:  "load",
-				Usage: "load transformed items concurrently",
+				Usage: "Load transformed segments concurrently",
 				Flags: internal.LoaderCommandFlags,
 				Action: func(ctx *cli.Context) error {
 					filePath := ctx.String("file-path")
@@ -128,7 +128,7 @@ func main() {
 			},
 			{
 				Name:  "clean",
-				Usage: "clean partitions file info",
+				Usage: "Clean partitions file info",
 				Flags: internal.CleanCommandFlags,
 				Action: func(ctx *cli.Context) error {
 					filePath := ctx.String("file-path")
