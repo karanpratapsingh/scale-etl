@@ -30,7 +30,7 @@ Generated sample data
 
 ## Features
 
-Benchmarks were done on Apple M2 CPU with 16 GB Memory. `scripts/pandas_benchmark.sh` has benchmark implementation for [pandas](https://pandas.pydata.org).
+Benchmarks were done on Apple M4 CPU with 16 GB Memory. `scripts/pandas_benchmark.sh` has benchmark implementation for [pandas](https://pandas.pydata.org).
 
 ### Partition
 
@@ -74,11 +74,11 @@ $ scale-etl partition --file-path samples/sample_10m.csv --partition-size 100000
 
 | Sample Size | Partition Size | Pandas    | ScaleETL   | Improvement |
 | ----------- | -------------- | --------- | ---------- | ----------- |
-| 100k        | 10,000         | 34.7ms    | 5.0497ms   | 6.94x       |
-| 1m          | 10,000         | 316.1ms   | 50.6128ms  | 6.26x       |
-| 10m         | 100,000        | 3.020s    | 398.8537ms | 7.5x        |
-| 100m        | 1,000,000      | 41.2236s  | 3.8394s    | 10.72x      |
-| 1b          | 1,000,000      | 462.6593s | 40.1622s   | 11.52x      |
+| 100k        | 10,000         | 24.4ms    | 4.7525ms   | 5.13x       |
+| 1m          | 10,000         | 196.8ms   | 35.5033ms  | 5.54x       |
+| 10m         | 100,000        | 2.0143s   | 297.9035ms | 6.76x       |
+| 100m        | 1,000,000      | 31.0396s  | 2.9237s    | 10.62x      |
+| 1b          | 1,000,000      | 462.6593s | 28.6994s   | 16.12x      |
 
 ### Transform
 
@@ -124,11 +124,11 @@ $ scale-etl transform --file-path samples/sample_10m.csv --segment-size 10000
 
 | Sample Size | Batch Size | Segment Size | Pandas   | ScaleETL   | Improvement |
 | ----------- | ---------- | ------------ | -------- | ---------- | ----------- |
-| 100k        | 10         | 10,000       | 181.2ms  | 14.0836ms  | 12.87x      |
-| 1m          | 10         | 10,000       | 789.4ms  | 86.9535ms  | 9.09x       |
-| 10m         | 20         | 10,000       | 7.9503s  | 821.9298ms | 9.67x       |
-| 100m        | 20         | 100,000      | 91.2204s | 6.7518s    | 13.50x      |
-| 1b          | 20         | 100,000      | 988.845s | 70.2302s   | 14.06x      |
+| 100k        | 10         | 10,000       | 64.4ms   | 9.0974ms   | 7.08x       |
+| 1m          | 10         | 10,000       | 622.0ms  | 81.0755ms  | 7.67x       |
+| 10m         | 20         | 10,000       | 6.7087s  | 470.2074ms | 14.27x      |
+| 100m        | 20         | 100,000      | 75.2270s | 4.2702s    | 17.62x      |
+| 1b          | 20         | 100,000      | 988.845s | 83.0932s   | 11.90x      |
 
 ### Search
 
@@ -160,11 +160,11 @@ $ scale-etl search --file-path samples/sample_10m.csv --segment-size 10000 --pat
 
 | Sample Size | Segment Size | Pandas     | ScaleETL   | Improvement |
 | ----------- | ------------ | ---------- | ---------- | ----------- |
-| 100k        | 10,000       | 212.7ms    | 12.1287ms  | 18.73x      |
-| 1m          | 10,000       | 1.1510s    | 96.2360ms  | 11.98x      |
-| 10m         | 100,000      | 11.5798s   | 541.4265ms | 21.41x      |
-| 100m        | 1,000,000    | 146.9870s  | 4.7879s    | 30.72x      |
-| 1b          | 1,000,000    | 1492.5549s | 48.6179s   | 30.68x      |
+| 100k        | 10,000       | 81.5ms     | 6.9068ms   | 11.80x      |
+| 1m          | 10,000       | 787.9ms    | 66.3535ms  | 11.88x      |
+| 10m         | 100,000      | 8.0919s    | 529.3998ms | 15.29x      |
+| 100m        | 1,000,000    | 100.8681s  | 4.9546s    | 20.36x      |
+| 1b          | 1,000,000    | 1492.5549s | 50.5780s   | 29.51x      |
 
 ### Load
 
@@ -192,7 +192,7 @@ $ scale-etl load --file-path samples/sample_10m.csv --pool-size 50 --script-path
 
 **Benchmark**
 
-Loader benchmark can be quite subjective as there are a lot of external factors to consider like data store latency and network bandwidth. Below is a sample benchmark for PostgreSQL 16.1 running on Docker 4.25.2 (`scripts/sample_pg_load_script.sh`).
+Loader benchmark can be quite subjective as there are a lot of external factors to consider like data store latency and network bandwidth. Below is a sample benchmark for PostgreSQL 16.1 running on Docker 28.5.1 (`scripts/sample_pg_load_script.sh`).
 
 | Sample Size | Segment Size | Time       |
 | ----------- | ------------ | ---------- |
